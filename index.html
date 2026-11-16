@@ -2,505 +2,216 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tracking Pro EV+ · Base de Datos Local</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0e1115" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Tracking Pro EV+ · Cloud Sync</title>
+  
   <link rel="manifest" href="manifest.json" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+  
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <style>
     :root {
-      --bg-main: #0e1115;
-      --bg-panel: #161a20;
-      --bg-card: #1b2028;
-      --bg-input: #111419;
-      --border: #28303d;
-      --text-main: #f1f5f9;
-      --text-muted: #94a3b8;
-      --accent-red: #b91c32;
-      --accent-blue: #2563eb;
-      --accent-green: #10b981;
-      --accent-purple: #8b5cf6;
-      --accent-amber: #f59e0b;
-      --accent-cyan: #06b6d4;
-      --accent-orange: #f97316; /* Nuevo color para pasos */
+      --bg-main: #0e1115; --bg-panel: #161a20; --bg-card: #1b2028; --bg-input: #111419;
+      --border: #28303d; --text-main: #f1f5f9; --text-muted: #94a3b8;
+      --accent-red: #b91c32; --accent-blue: #2563eb; --accent-green: #10b981;
+      --accent-purple: #8b5cf6; --accent-amber: #f59e0b; --accent-cyan: #06b6d4; --accent-orange: #f97316;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { background: var(--bg-main); color: var(--text-main); padding: 24px; min-height: 100vh; }
     .container { max-width: 1400px; margin: 0 auto; }
 
-    /* Header */
     .header-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 8px; }
-    .header-title-group { display: flex; align-items: center; gap: 14px; }
+    .header-title-group { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
     .header-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
-    .header-badge { background: #181c23; border: 1px solid var(--border); padding: 6px 14px; border-radius: 999px; font-size: 14px; font-weight: 600; color: #e2e8f0; display: inline-flex; align-items: center; gap: 8px; }
-    .header-badge span { color: var(--accent-amber); }
+    .header-badge { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 6px 14px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--accent-green); display: inline-flex; align-items: center; gap: 8px; }
     .subtitle { color: var(--text-muted); font-size: 13px; margin-bottom: 18px; }
 
-    .backup-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border); padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; transition: 0.15s; }
-    .btn:hover { background: #252c37; }
-    .btn-primary { background: var(--accent-red); border-color: var(--accent-red); color: #fff; }
-    .btn-primary:hover { background: #991729; }
-    .btn-success { background: var(--accent-green); border-color: var(--accent-green); color: #052e16; font-weight: 600; }
-    .btn-danger { background: transparent; border-color: var(--accent-red); color: var(--accent-red); }
-    .btn-danger:hover { background: rgba(185, 28, 50, 0.1); }
-    .btn-cyan { background: var(--accent-cyan); border-color: var(--accent-cyan); color: #fff; font-weight: 600;}
-    .btn-icon { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: 4px; }
-    .btn-icon:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+    .sync-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: rgba(16, 185, 129, 0.1); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .sync-status.syncing { background: rgba(245, 158, 11, 0.1); color: var(--accent-amber); border-color: rgba(245, 158, 11, 0.3); }
+    .sync-status.error { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
 
-    /* Main Nav Tabs */
-    .nav-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
-    .nav-tab { background: var(--bg-panel); color: var(--text-muted); border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.15s; }
+    .backup-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border); padding: 10px 14px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.15s; display: inline-flex; align-items: center; justify-content: center; }
+    .btn-primary { background: var(--accent-red); border-color: var(--accent-red); color: #fff; }
+    .btn-success { background: var(--accent-green); border-color: var(--accent-green); color: #052e16; }
+    .btn-danger { background: transparent; border-color: var(--accent-red); color: var(--accent-red); }
+    .btn-icon { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: 4px; }
+
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
+    .nav-tabs::-webkit-scrollbar { display: none; }
+    .nav-tab { flex: 0 0 auto; background: var(--bg-panel); color: var(--text-muted); border: 1px solid var(--border); padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
     .nav-tab.active { background: var(--accent-red); border-color: var(--accent-red); color: #fff; }
 
-    /* Filter Bar */
     .filter-bar { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 18px; }
     .filter-group { display: flex; flex-direction: column; gap: 4px; }
-    .filter-group label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-    select, input, textarea { background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; font-size: 13px; outline: none; }
-    select:focus, input:focus, textarea:focus { border-color: var(--accent-blue); }
-    .filter-summary { color: var(--text-muted); font-size: 13px; margin-left: 8px; }
-
-    /* KPI Grid */
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px; }
-    .kpi-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; position: relative; }
-    .kpi-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
-    .kpi-content { display: flex; align-items: flex-start; gap: 14px; flex-grow: 1; }
-    .kpi-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
-    .icon-blue { background: rgba(37, 99, 235, 0.2); border: 1px solid #2563eb; }
-    .icon-green { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; }
-    .icon-purple { background: rgba(139, 92, 246, 0.2); border: 1px solid #8b5cf6; }
-    .icon-amber { background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; }
-    .icon-cyan { background: rgba(6, 182, 212, 0.2); border: 1px solid #06b6d4; }
-    .icon-orange { background: rgba(249, 115, 22, 0.2); border: 1px solid #f97316; }
+    .filter-group label, .form-field label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
     
-    .kpi-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; }
+    input, select, textarea { background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border); padding: 12px; border-radius: 6px; font-size: 16px; outline: none; width: 100%; }
+    input:focus { border-color: var(--accent-green); }
+    .filter-summary { color: var(--text-muted); font-size: 13px; margin-left: auto; }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .kpi-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    .kpi-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+    .kpi-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .kpi-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
     .kpi-value { font-size: 26px; font-weight: 800; margin: 2px 0; }
     .kpi-sub { font-size: 12px; color: var(--text-muted); }
     .progress-track { width: 100%; height: 6px; background: #252c37; border-radius: 999px; overflow: hidden; margin-bottom: 6px; }
     .progress-fill { height: 100%; border-radius: 999px; transition: width 0.3s ease; }
-    .kpi-pct { font-size: 12px; font-weight: 600; }
-    
-    /* Privacy Blur Classes */
-    .privacy-blur { filter: blur(6px); opacity: 0.7; user-select: none; transition: 0.2s ease; }
-    .privacy-blur:hover { filter: blur(3px); }
-    
-    /* Hide charts when blurred */
-    .chart-container.privacy-hidden { visibility: hidden; }
 
-    /* Charts Grid */
-    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 18px; margin-bottom: 24px; }
     .charts-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-bottom: 24px; }
-    
-    .chart-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 20px; position: relative; }
-    .chart-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; color: #fff; }
-    .chart-container { position: relative; height: 290px; width: 100%; transition: 0.2s ease; }
-    .chart-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: center; background: rgba(22, 26, 32, 0.8); backdrop-filter: blur(4px); z-index: 10; border-radius: 8px; color: var(--text-muted); font-size: 14px; font-weight: 500; }
-    
-    .privacy-active .chart-overlay { display: flex; }
-    .privacy-active .chart-container canvas { opacity: 0.1 !important; }
+    .chart-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+    .chart-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; color: #fff; }
+    .chart-container { position: relative; height: 250px; width: 100%; }
 
-    /* Habit Bars (Dashboard) */
-    .dashboard-habit-list { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
-    .dashboard-habit-item { display: flex; flex-direction: column; gap: 4px; }
-    .dashboard-habit-header { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #cbd5e1; }
-    .dashboard-habit-track { width: 100%; height: 6px; background: #252c37; border-radius: 999px; overflow: hidden; }
-    .dashboard-habit-fill { height: 100%; border-radius: 999px; background: #10b981; transition: width 0.3s ease; }
-
-    /* Forms & Tables */
     .panel-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
-    .panel-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 16px; }
+    .panel-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #fff; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px; }
     .form-field { display: flex; flex-direction: column; gap: 6px; }
-    .form-field label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
-    
-    /* Drag-and-drop habits container */
-    .habits-check-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
-    .habit-check-item { background: var(--bg-card); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; user-select: none; }
-    .habit-check-item input { width: 16px; height: 16px; cursor: pointer; }
 
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 700px; }
+    .table-responsive { overflow-x: auto; border-radius: 6px; border: 1px solid var(--border); }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
     th { color: var(--text-muted); font-weight: 600; font-size: 11px; text-transform: uppercase; background: #13171d; }
-    tr:hover { background: rgba(255,255,255,0.02); }
-    .badge-pos { color: #10b981; font-weight: 700; }
-    .badge-neg { color: #ef4444; font-weight: 700; }
-    
-    .table-privacy .badge-pos, .table-privacy .badge-neg, .table-privacy .privacy-col { filter: blur(4px); opacity: 0.7; }
 
-    /* Manage Habits UI */
-    .habit-manager-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background: var(--bg-input); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); cursor: grab; }
-    .habit-manager-item:active { cursor: grabbing; }
-    .drag-handle { color: #64748b; cursor: grab; padding: 0 5px; font-size: 18px; }
-    .habit-manager-item input[type="text"] { flex-grow: 1; border: none; background: transparent; padding: 0; font-size: 14px; }
-    .habit-manager-item input[type="number"] { width: 70px; }
-
-    .section-view { display: none; }
-    .section-view.active { display: block; }
-    @media (max-width: 900px) {
-      .charts-grid-3 { grid-template-columns: 1fr; }
-    }
-    
-    /* Time Input Container */
-    .time-input-container { display: flex; align-items: center; gap: 8px; }
-    .time-input-container input { width: 60px; text-align: center; }
-    .time-input-container span { color: var(--text-muted); font-weight: 600; }
-    
-  
-    /* Modal Supabase */
     .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index:9999; backdrop-filter: blur(4px); padding: 16px; }
     .modal-content { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 100%; max-width: 500px; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .modal-title { font-size: 18px; font-weight: 700; color: #fff; }
+    
+    .section-view { display: none; }
+    .section-view.active { display: block; }
 
+    @media (max-width: 768px) {
+      body { padding: 12px; }
+      .header-title { font-size: 22px; }
+      .kpi-grid { grid-template-columns: 1fr; gap: 12px; }
+      .charts-grid-3 { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .filter-bar { padding: 12px; gap: 12px; }
+      .btn { width: 100%; }
+      .backup-actions { width: 100%; display: grid; grid-template-columns: 1fr; gap: 8px; }
+    }
   </style>
 </head>
 <body>
 <div class="container">
-  <!-- Header -->
+  
   <div class="header-top">
     <div class="header-title-group">
-      <div class="header-title">Tracking</div>
-      <div class="header-badge"><span>✦</span> 02 · Tracking de hábitos &amp; EV+</div>
+      <div class="header-title">Tracking Pro EV+</div>
+      <div class="header-badge"><span>✦</span> Open Source Sync</div>
     </div>
     <div class="backup-actions">
-      <div id="syncStatus" style="display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; padding:4px 10px; border-radius:999px; background:rgba(16,185,129,0.1); color:var(--accent-green); border:1px solid rgba(16,185,129,0.3);">✓ Local</div>
-      <button class="btn btn-cyan" onclick="openSettingsModal()">⚙ Conectar Nube (Supabase)</button>
-      <button class="btn" onclick="exportData()">⬇ Exportar</button>
-      <label class="btn" style="cursor:pointer;">⬆ Importar <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)" /></label>
+      <div id="syncStatus" class="sync-status">✓ Local</div>
+      <button class="btn" onclick="openSettingsModal()" style="border-color: var(--accent-green); color: var(--accent-green);">⚙ Supabase</button>
+      <button class="btn" onclick="exportData()" id="btnExport">⬇ Exportar Respaldo</button>
+      <label class="btn" style="cursor:pointer;">⬆ Importar JSON <input type="file" style="display:none" onchange="importData(event)"></label>
     </div>
   </div>
-  <div class="subtitle">Seguimiento local mensual. Control de Bankroll, Tiempos y Metas de Pasos.</div>
+  
+  <div class="subtitle">
+    <span>Sincronización en tiempo real. Funciona sin internet (PWA). Base de datos libre.</span>
+  </div>
 
-  <!-- Navigation Tabs -->
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchTab('dashboard', this)">Dashboard</button>
-    <button class="nav-tab" onclick="switchTab('registro', this)">+ Registro Diario / Bankroll</button>
-    <button class="nav-tab" onclick="switchTab('habitos', this)">Gestionar Hábitos</button>
-    <button class="nav-tab" onclick="switchTab('objetivos', this)">Planificación Mensual</button>
-    <button class="nav-tab" onclick="switchTab('winrate', this)">Winrate &amp; Historial</button>
+    <button class="nav-tab" onclick="switchTab('registro', this)">+ Registro Diario</button>
+    <button class="nav-tab" onclick="switchTab('habitos', this)">Hábitos</button>
+    <button class="nav-tab" onclick="switchTab('objetivos', this)">Planificación</button>
+    <button class="nav-tab" onclick="switchTab('winrate', this)">Historial</button>
   </div>
 
-  <!-- Filter Bar -->
   <div class="filter-bar">
-    <div class="filter-group">
-      <label>Desde mes</label>
-      <input type="month" id="fromMonth" onchange="refreshAll()" />
-    </div>
-    <div class="filter-group">
-      <label>Hasta mes</label>
-      <input type="month" id="toMonth" onchange="refreshAll()" />
-    </div>
-    <div class="filter-summary" id="periodSummary">0 mes(es) en el período · 0 días registrados.</div>
+    <div class="filter-group"><label>Desde mes</label><input type="month" id="fromMonth" onchange="refreshAll()" /></div>
+    <div class="filter-group"><label>Hasta mes</label><input type="month" id="toMonth" onchange="refreshAll()" /></div>
+    <div class="filter-summary" id="periodSummary">0 mes(es) · 0 días.</div>
   </div>
 
-  <!-- VIEW 1: DASHBOARD -->
+  <!-- DASHBOARD -->
   <div id="view-dashboard" class="section-view active">
-    <!-- KPI Cards (Added Steps KPI) -->
     <div class="kpi-grid">
-      
-      <!-- WINRATE / EARNINGS KPI WITH PRIVACY TOGGLE -->
-      <div class="kpi-card">
-        <div class="kpi-top">
-          <div class="kpi-content">
-            <div class="kpi-icon icon-amber">$/h</div>
-            <div>
-              <div class="kpi-label">WINRATE ($/HORA)</div>
-              <div class="kpi-value privacy-target" id="kpiHourlyRate">$0.00/h</div>
-              <div class="kpi-sub privacy-target" id="kpiHourlySub">Ganancia bruta período: $0.00</div>
-            </div>
-          </div>
-          <button class="btn-icon" onclick="togglePrivacy(this, ['kpiHourlyRate', 'kpiHourlySub'], 'chartDailyProfitCard')" title="Ocultar datos financieros">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-          </button>
-        </div>
-        <div style="height:6px; margin-bottom:6px;"></div>
-        <div class="kpi-pct" style="color:var(--accent-amber)">Basado en horas reales jugadas</div>
-      </div>
-      
-      <div class="kpi-card">
-        <div class="kpi-top">
-          <div class="kpi-content">
-            <div class="kpi-icon icon-blue">📘</div>
-            <div>
-              <div class="kpi-label">TIEMPO DE ESTUDIO (ACUM)</div>
-              <div class="kpi-value" id="kpiStudyHours">0h 0m</div>
-              <div class="kpi-sub" id="kpiStudySub">Meta: 0h en el período</div>
-            </div>
-          </div>
-        </div>
-        <div class="progress-track"><div class="progress-fill" id="barStudy" style="background:var(--accent-blue);width:0%"></div></div>
-        <div class="kpi-pct" id="pctStudy" style="color:var(--accent-blue)">0% del objetivo</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="kpi-top">
-          <div class="kpi-content">
-            <div class="kpi-icon icon-purple">♠️</div>
-            <div>
-              <div class="kpi-label">TIEMPO DE JUEGO / GRIND</div>
-              <div class="kpi-value" id="kpiPlayHours">0h 0m</div>
-              <div class="kpi-sub" id="kpiPlaySub">0h planificadas</div>
-            </div>
-          </div>
-        </div>
-        <div class="progress-track"><div class="progress-fill" id="barPlay" style="background:var(--accent-purple);width:0%"></div></div>
-        <div class="kpi-pct" id="pctPlay" style="color:var(--accent-purple)">0% del objetivo</div>
-      </div>
-
-      <!-- NEW STEPS KPI -->
-      <div class="kpi-card">
-        <div class="kpi-top">
-          <div class="kpi-content">
-            <div class="kpi-icon icon-orange">👣</div>
-            <div>
-              <div class="kpi-label">PASOS ACUMULADOS</div>
-              <div class="kpi-value" id="kpiTotalSteps">0</div>
-              <div class="kpi-sub" id="kpiStepsSub">Meta: 0 en el período</div>
-            </div>
-          </div>
-        </div>
-        <div class="progress-track"><div class="progress-fill" id="barSteps" style="background:var(--accent-orange);width:0%"></div></div>
-        <div class="kpi-pct" id="pctSteps" style="color:var(--accent-orange)">0% del objetivo</div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="kpi-top">
-          <div class="kpi-content">
-            <div class="kpi-icon icon-green">✅</div>
-            <div>
-              <div class="kpi-label">HÁBITOS: CUMPLIMIENTO</div>
-              <div class="kpi-value" id="kpiHabitPct">0%</div>
-              <div class="kpi-sub" id="kpiHabitSub">0 de 0 bloques cumplidos</div>
-            </div>
-          </div>
-        </div>
-        <div class="progress-track"><div class="progress-fill" id="barHabit" style="background:var(--accent-green);width:0%"></div></div>
-        <div class="kpi-pct" id="pctHabit" style="color:var(--accent-green)">Meta ponderada del período</div>
-      </div>
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:rgba(245,158,11,0.2);color:#f59e0b;">$/h</div><div><div class="kpi-label">WINRATE ($/H)</div><div class="kpi-value" id="kpiHourlyRate">$0.00/h</div><div class="kpi-sub" id="kpiHourlySub">Ganancia: $0.00</div></div></div></div>
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:rgba(37,99,235,0.2);color:#2563eb;">📘</div><div><div class="kpi-label">ESTUDIO</div><div class="kpi-value" id="kpiStudyHours">0h 0m</div><div class="kpi-sub" id="kpiStudySub">Meta: 0h</div></div></div><div class="progress-track"><div class="progress-fill" id="barStudy" style="background:#2563eb;width:0%"></div></div></div>
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:rgba(139,92,246,0.2);color:#8b5cf6;">♠️</div><div><div class="kpi-label">JUEGO / GRIND</div><div class="kpi-value" id="kpiPlayHours">0h 0m</div><div class="kpi-sub" id="kpiPlaySub">0h planificadas</div></div></div><div class="progress-track"><div class="progress-fill" id="barPlay" style="background:#8b5cf6;width:0%"></div></div></div>
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:rgba(249,115,22,0.2);color:#f97316;">👣</div><div><div class="kpi-label">PASOS</div><div class="kpi-value" id="kpiTotalSteps">0</div><div class="kpi-sub" id="kpiStepsSub">Meta: 0</div></div></div><div class="progress-track"><div class="progress-fill" id="barSteps" style="background:#f97316;width:0%"></div></div></div>
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:rgba(16,185,129,0.2);color:#10b981;">✅</div><div><div class="kpi-label">HÁBITOS</div><div class="kpi-value" id="kpiHabitPct">0%</div><div class="kpi-sub" id="kpiHabitSub">0 bloques</div></div></div><div class="progress-track"><div class="progress-fill" id="barHabit" style="background:#10b981;width:0%"></div></div></div>
     </div>
 
-    <!-- Dashboard Content Row - Now 4 columns/charts -->
-    <div class="charts-grid-3" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
-      
-      <!-- Evolucion dia a dia (Curva Ganancias) -->
-      <div class="chart-card" id="chartDailyProfitCard">
-        <div class="chart-title">
-          Evolución Ganancias Día a Día
-          <button class="btn-icon" onclick="toggleCardPrivacy('chartDailyProfitCard')" title="Ocultar gráfico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-          </button>
-        </div>
-        <div class="chart-container"><canvas id="chartDailyProfit"></canvas></div>
-        <div class="chart-overlay">Datos financieros ocultos</div>
-      </div>
-
-      <!-- Estudio dia a dia -->
-      <div class="chart-card">
-        <div class="chart-title">Estudio (Horas)</div>
-        <div class="chart-container"><canvas id="chartStudyDaily"></canvas></div>
-      </div>
-
-      <!-- Juego dia a dia -->
-      <div class="chart-card">
-        <div class="chart-title">Juego (Horas)</div>
-        <div class="chart-container"><canvas id="chartPlayDaily"></canvas></div>
-      </div>
-
-      <!-- NUEVO: Pasos dia a dia -->
-      <div class="chart-card">
-        <div class="chart-title">Pasos (Día a Día)</div>
-        <div class="chart-container"><canvas id="chartStepsDaily"></canvas></div>
-      </div>
-
+    <div class="charts-grid-3">
+      <div class="chart-card"><div class="chart-title">Ganancias Día a Día</div><div class="chart-container"><canvas id="chartDailyProfit"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Juego y Estudio</div><div class="chart-container"><canvas id="chartPlayDaily"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Pasos</div><div class="chart-container"><canvas id="chartStepsDaily"></canvas></div></div>
     </div>
     
-    <!-- Habits Full Width Row -->
     <div class="panel-card" style="margin-bottom:0; display:flex; flex-direction:column;">
-      <div class="panel-title">Progreso de Hábitos (Período actual)</div>
-      <div class="dashboard-habit-list" id="dashboardHabitList" style="flex-grow:1; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
-        <!-- Injected by JS -->
-      </div>
+      <div class="panel-title">Progreso de Hábitos</div>
+      <div id="dashboardHabitList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;"></div>
     </div>
   </div>
 
-  <!-- VIEW 2: REGISTRO DIARIO -->
+  <!-- REGISTRO -->
   <div id="view-registro" class="section-view">
     <div class="panel-card">
-      <div class="panel-title">Nuevo Registro Diario y Control de Banca</div>
-      <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
-        <div class="form-field">
-          <label>Fecha</label>
-          <input type="date" id="inpDate" onchange="setupDailyInputDefaults()" />
-        </div>
+      <div class="panel-title">Nuevo Registro Diario</div>
+      <div class="form-grid">
+        <div class="form-field"><label>Fecha</label><input type="date" id="inpDate" onchange="setupDailyInputDefaults()" style="padding: 14px;" /></div>
+        <div class="form-field" style="background: rgba(6, 182, 212, 0.1); padding: 14px; border-radius: 8px; border: 1px solid var(--accent-cyan);"><label style="color: var(--accent-cyan);">Banca INICIAL $</label><input type="number" id="inpBankStart" step="0.01" min="0" value="0.00" oninput="calculateProfit()" /></div>
+        <div class="form-field" style="background: rgba(16, 185, 129, 0.1); padding: 14px; border-radius: 8px; border: 1px solid var(--accent-green);"><label style="color: var(--accent-green);">Banca FINAL $</label><input type="number" id="inpBankEnd" step="0.01" min="0" value="0.00" oninput="calculateProfit()" /></div>
+        <div class="form-field"><label>Ganancia ($)</label><input type="number" id="inpProfit" step="0.01" value="0.00" readonly style="background: #1a1e24; color: #94a3b8; border-color: #334155; font-weight:bold; padding: 14px;" /></div>
         
-        <div class="form-field" style="background: rgba(6, 182, 212, 0.1); padding: 10px; border-radius: 6px; border: 1px solid var(--accent-cyan);">
-          <label style="color: var(--accent-cyan);">Banca INICIAL (Inicio sesión) $</label>
-          <input type="number" id="inpBankStart" step="0.01" min="0" value="0.00" oninput="calculateProfit()" />
-        </div>
-        
-        <div class="form-field" style="background: rgba(16, 185, 129, 0.1); padding: 10px; border-radius: 6px; border: 1px solid var(--accent-green);">
-          <label style="color: var(--accent-green);">Banca FINAL (Fin sesión) $</label>
-          <input type="number" id="inpBankEnd" step="0.01" min="0" value="0.00" oninput="calculateProfit()" />
-        </div>
-
-        <div class="form-field">
-          <label>Ganancia de la Sesión ($)</label>
-          <input type="number" id="inpProfit" step="0.01" value="0.00" readonly style="background: #1a1e24; color: #94a3b8; border-color: #334155; font-weight:bold;" />
-          <span style="font-size:10px; color:var(--text-muted);">*Calculado auto.</span>
-        </div>
-
-        <!-- TIME INPUTS FOR PLAY -->
-        <div class="form-field">
-          <label>Tiempo de Juego (Grind)</label>
-          <div class="time-input-container">
-            <input type="number" id="inpPlayHrsH" min="0" placeholder="HH" value="0" /><span>:</span>
-            <input type="number" id="inpPlayHrsM" min="0" max="59" placeholder="MM" value="0" />
-          </div>
-        </div>
-        
-        <!-- TIME INPUTS FOR STUDY -->
-        <div class="form-field">
-          <label>Tiempo de Estudio</label>
-          <div class="time-input-container">
-            <input type="number" id="inpStudyH" min="0" placeholder="HH" value="0" /><span>:</span>
-            <input type="number" id="inpStudyM" min="0" max="59" placeholder="MM" value="0" />
-          </div>
-        </div>
-
-        <!-- NEW STEPS INPUT -->
-        <div class="form-field">
-          <label>Pasos dados hoy</label>
-          <input type="number" id="inpSteps" step="1" min="0" value="0" placeholder="Ej: 10000" />
-        </div>
-
-        <div class="form-field" style="background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 6px; border: 1px dashed var(--accent-red);">
-          <label style="color: #ef4444;">Retiros / Cashouts de Banca ($)</label>
-          <input type="number" id="inpWithdrawal" step="0.01" min="0" value="0.00" />
-          <span style="font-size:10px; color:var(--text-muted);">Si hiciste un retiro hoy.</span>
-        </div>
-
-        <div class="form-field" style="grid-column: span 1;">
-          <label>Notas del Día / Aprendizaje Clave</label>
-          <input type="text" id="inpNotes" placeholder="Ej: Ajustes en 3bet pots IP..." />
-        </div>
+        <div class="form-field"><label>Juego (H y M)</label><div style="display: flex; gap: 8px;"><input type="number" id="inpPlayHrsH" min="0" placeholder="H" value="0" style="padding:14px; text-align:center;" /><input type="number" id="inpPlayHrsM" min="0" max="59" placeholder="M" value="0" style="padding:14px; text-align:center;" /></div></div>
+        <div class="form-field"><label>Estudio (H y M)</label><div style="display: flex; gap: 8px;"><input type="number" id="inpStudyH" min="0" placeholder="H" value="0" style="padding:14px; text-align:center;" /><input type="number" id="inpStudyM" min="0" max="59" placeholder="M" value="0" style="padding:14px; text-align:center;" /></div></div>
+        <div class="form-field"><label>Pasos dados</label><input type="number" id="inpSteps" step="1" min="0" value="0" style="padding: 14px;" /></div>
+        <div class="form-field" style="background: rgba(239, 68, 68, 0.1); padding: 14px; border-radius: 8px; border: 1px dashed var(--accent-red);"><label style="color: #ef4444;">Retiros / Cashouts ($)</label><input type="number" id="inpWithdrawal" step="0.01" min="0" value="0.00" /></div>
+        <div class="form-field" style="grid-column: 1 / -1;"><label>Notas del Día</label><input type="text" id="inpNotes" placeholder="Ajustes, mindset..." style="padding: 14px;" /></div>
       </div>
 
-      <label style="font-size:12px; color:var(--text-muted); font-weight:600; margin-top:8px; display:block;">Hábitos Cumplidos Hoy:</label>
-      <div class="habits-check-grid" id="habitCheckboxes"></div>
+      <label style="font-size:12px; font-weight:600; margin-top:16px; display:block;">Hábitos Completados:</label>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0;" id="habitCheckboxes"></div>
 
-      <button class="btn btn-primary" style="margin-top:16px;" onclick="saveDailyEntry()">💾 Guardar Registro Diario</button>
+      <button class="btn btn-primary" style="margin-top:24px; width: 100%; padding: 16px; font-size: 16px;" onclick="saveDailyEntry()">💾 Guardar Registro</button>
     </div>
   </div>
 
-  <!-- VIEW 3: GESTIONAR HABITOS -->
+  <!-- HABITOS -->
   <div id="view-habitos" class="section-view">
     <div class="panel-card">
-      <div class="panel-title">Lista de Hábitos y Orden de Prioridad</div>
-      <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
-        Agrega, edita o elimina los hábitos. <strong>Arrastra y suelta (drag & drop)</strong> los hábitos desde el ícono (☰) para cambiar el orden en que aparecen en el registro diario.
-      </p>
-      
+      <div class="panel-title">Lista de Hábitos</div>
       <div id="habitManagerList"></div>
-      
-      <div style="margin-top: 16px; padding-top:16px; border-top: 1px solid var(--border); display: flex; gap:10px; align-items: flex-end; flex-wrap:wrap;">
-        <div class="form-field" style="flex-grow:1; min-width:200px;">
-          <label>Nombre del Nuevo Hábito</label>
-          <input type="text" id="newHabitName" placeholder="Ej: Ir al gimnasio" />
-        </div>
-        <div class="form-field">
-          <label>Días / Mes</label>
-          <input type="number" id="newHabitDays" min="1" max="31" value="20" />
-        </div>
-        <button class="btn btn-primary" onclick="addHabit()">+ Agregar Hábito</button>
+      <div style="margin-top: 24px; padding-top:24px; border-top: 1px solid var(--border); display: flex; flex-direction:column; gap:14px;">
+        <div class="form-field"><label>Nuevo Hábito</label><input type="text" id="newHabitName" placeholder="Ej: Gimnasio" style="padding: 14px;"/></div>
+        <div class="form-field"><label>Días/Mes Meta</label><input type="number" id="newHabitDays" min="1" max="31" value="20" style="padding: 14px;"/></div>
+        <button class="btn btn-primary" style="padding: 14px;" onclick="addHabit()">+ Agregar Hábito</button>
       </div>
     </div>
   </div>
 
-  <!-- VIEW 4: OBJETIVOS MENSUALES -->
+  <!-- OBJETIVOS -->
   <div id="view-objetivos" class="section-view">
     <div class="panel-card">
-      <div class="panel-title">Configuración de Metas Mensuales (Planificado)</div>
-      <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
-        Define tus objetivos totales por mes.
-      </p>
+      <div class="panel-title">Metas Mensuales</div>
       <div class="form-grid">
-        <div class="form-field">
-          <label>Meta Horas de Estudio / Mes</label>
-          <input type="number" id="goalStudyHrs" step="1" value="40" />
-        </div>
-        <div class="form-field">
-          <label>Meta Horas de Juego / Mes</label>
-          <input type="number" id="goalPlayHrs" step="1" value="100" />
-        </div>
-        <div class="form-field">
-          <label>Meta de Pasos / Mes</label>
-          <input type="number" id="goalSteps" step="1000" value="300000" />
-        </div>
+        <div class="form-field"><label>Meta Estudio (Horas)</label><input type="number" id="goalStudyHrs" step="1" value="40" style="padding:14px;" /></div>
+        <div class="form-field"><label>Meta Juego (Horas)</label><input type="number" id="goalPlayHrs" step="1" value="100" style="padding:14px;" /></div>
+        <div class="form-field"><label>Meta Pasos</label><input type="number" id="goalSteps" step="1000" value="300000" style="padding:14px;" /></div>
       </div>
-
-      <button class="btn btn-success" style="margin-top:16px;" onclick="saveGoals()">✔ Actualizar Objetivos Planificados</button>
-    </div>
-
-    <!-- Global Monthly Charts -->
-    <div class="charts-grid-3">
-      <div class="chart-card">
-        <div class="chart-title">Estudio por Mes</div>
-        <div class="chart-container"><canvas id="chartStudyMonthly"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Juego por Mes</div>
-        <div class="chart-container"><canvas id="chartPlayMonthly"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Pasos por Mes</div>
-        <div class="chart-container"><canvas id="chartStepsMonthly"></canvas></div>
-      </div>
+      <button class="btn btn-success" style="margin-top:16px; width:100%; padding:14px;" onclick="saveGoals()">✔ Actualizar Metas</button>
     </div>
   </div>
 
-  <!-- VIEW 5: WINRATE & HISTORIAL -->
+  <!-- HISTORIAL -->
   <div id="view-winrate" class="section-view">
-    
-    <!-- Privacy control for history -->
-    <div style="display:flex; justify-content:flex-end; margin-bottom: 12px;">
-      <button class="btn" onclick="toggleTablePrivacy(this)" id="btnTablePrivacy">
-        👁️ Ocultar datos financieros
-      </button>
-    </div>
-
-    <div class="charts-grid" style="margin-bottom:20px;">
-      <div class="chart-card" id="chartWinrateMonthlyCard">
-        <div class="chart-title">Winrate Mensual Histórico ($/Hora)</div>
-        <div class="chart-container" style="height:250px;"><canvas id="chartMonthlyHourly"></canvas></div>
-        <div class="chart-overlay">Datos financieros ocultos</div>
-      </div>
-      <div class="chart-card" id="chartWinrateDailyCard">
-        <div class="chart-title">Winrate ($/Hora) - Evolución Día a Día</div>
-        <div class="chart-container" style="height:250px;"><canvas id="chartDailyHourly"></canvas></div>
-        <div class="chart-overlay">Datos financieros ocultos</div>
-      </div>
-    </div>
-
-    <div class="panel-card" id="historyTableCard">
-      <div class="panel-title">Historial Completo de Sesiones y Banca</div>
-      <div style="overflow-x:auto;">
+    <div class="panel-card" id="historyTableCard" style="padding: 10px;">
+      <div class="panel-title" style="margin: 10px;">Historial Completo</div>
+      <div class="table-responsive">
         <table id="dataTable">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th class="privacy-col">Bank Inicio</th>
-              <th class="privacy-col">Bank Final</th>
-              <th>Ganancia Sesión</th>
-              <th>Juego (HH:MM)</th>
-              <th class="privacy-col">$/Hora</th>
-              <th class="privacy-col">Retiros ($)</th>
-              <th>Estudio (HH:MM)</th>
-              <th>Pasos</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
+          <thead><tr><th>Fecha</th><th>Bank Ini</th><th>Bank Fin</th><th>Ganancia</th><th>Juego</th><th>$/Hora</th><th>Retiro</th><th>Estudio</th><th>Pasos</th><th>Acción</th></tr></thead>
           <tbody id="dailyTableBody"></tbody>
         </table>
       </div>
@@ -515,301 +226,129 @@
       <div class="modal-title">Conectar Nube Libre (Supabase)</div>
       <button class="btn-icon" onclick="closeSettingsModal()">✕</button>
     </div>
-    <p style="font-size:13px; color:var(--text-muted); margin-bottom: 16px;">
-      Pega los datos de tu proyecto Supabase. La app priorizará la nube, pero guardará en local si te quedas sin internet.
+    
+    <p style="font-size:14px; color:var(--text-muted); margin-bottom: 16px;">
+      Pega los datos de tu proyecto Supabase. La app priorizará la nube, pero guardará local si te quedas sin internet.
     </p>
+
     <div class="form-field" style="margin-bottom: 14px;">
       <label>Project URL</label>
-      <input type="text" id="supaUrlInput" placeholder="https://xxxxxx.supabase.co" style="padding: 10px;" />
+      <input type="text" id="supaUrlInput" placeholder="https://xxxxxx.supabase.co" style="padding: 14px;" />
     </div>
+    
     <div class="form-field" style="margin-bottom: 24px;">
       <label>Project API Key (anon/public)</label>
-      <input type="text" id="supaKeyInput" placeholder="eyJhbGciOiJIUzI1NiIsInR..." style="padding: 10px;" />
+      <input type="text" id="supaKeyInput" placeholder="eyJhbGciOiJIUzI1NiIsInR..." style="padding: 14px;" />
     </div>
+
     <div style="display: flex; flex-direction:column; gap:12px;">
-      <button class="btn btn-success" style="padding: 12px; width: 100%; text-align:center; justify-content:center; display:flex;" onclick="syncLoad()">⬇ Conectar y Descargar Datos</button>
-      <button class="btn" style="padding: 12px; width: 100%; text-align:center; justify-content:center; display:flex;" onclick="closeSettingsModal()">Cancelar</button>
+      <button class="btn btn-success" style="padding: 14px;" onclick="syncLoad()">⬇ Conectar y Descargar Datos</button>
+      <button class="btn" style="padding: 14px;" onclick="closeSettingsModal()">Cancelar</button>
     </div>
   </div>
 </div>
 
 <script>
-const STORAGE_KEY = 'tracking_pro_ev_local_monthly_v13'; 
-
-const DEFAULT_HABITS = [
-  { id: 'caminata', name: 'Caminata + Sol Diario', targetPerMonth: 30 },
-  { id: 'meditacion', name: 'Meditación Mindfulness', targetPerMonth: 30 },
-  { id: 'familia', name: 'Familia Focus Diario', targetPerMonth: 30 },
-  { id: 'lectura', name: 'Lectura', targetPerMonth: 26 },
-  { id: 'estudio30', name: 'Estudio Mín. 30m', targetPerMonth: 26 },
-  { id: 'poker_hab', name: 'Sesión Poker', targetPerMonth: 26 },
-  { id: 'yoga', name: 'Yoga', targetPerMonth: 22 },
-  { id: 'bici_pesa', name: 'Bicicleta / Pesa Rusa', targetPerMonth: 16 }
-];
-
-const { createClient } = window.supabase || {};
-let supabaseClient = null;
+const STORAGE_KEY = 'tracking_pro_ev_pwa_v1'; 
 
 let appState = {
-  goals: {
-    studyHoursPerMonth: 40.0,
-    playHoursPerMonth: 100.0,
-    stepsPerMonth: 300000,
-    habits: DEFAULT_HABITS
-  },
+  goals: { studyHoursPerMonth: 40.0, playHoursPerMonth: 100.0, stepsPerMonth: 300000, habits: [] },
   entries: [],
-  settings: {
-    privacyMode: false,
-    historyPrivacyMode: false,
-    supaUrl: "",
-    supaKey: ""
-  }
+  settings: { supaUrl: "", supaKey: "" }
 };
 
 let charts = {};
+const { createClient } = window.supabase;
+let supabaseClient = null;
 
-function generateId() {
-  return Math.random().toString(36).substr(2, 9);
-}
-
-// Safely get next calendar day string without timezone issues
-function getNextDayStr(dateStr) {
-  const parts = dateStr.split('-');
-  const d = new Date(parts[0], parts[1] - 1, parts[2]);
-  d.setDate(d.getDate() + 1);
-  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
-}
-
-// Convert decimal hours (e.g. 2.5) to HH:MM format (e.g. 2h 30m)
-function decimalToHHMM(decimal) {
-  if (!decimal || isNaN(decimal)) return "0h 0m";
-  const h = Math.floor(decimal);
-  const m = Math.round((decimal - h) * 60);
-  return `${h}h ${m}m`;
-}
-
-// Convert HH and MM inputs to decimal hours (e.g. 2, 30 -> 2.5)
-function hmToDecimal(h, m) {
-  const hours = parseInt(h) || 0;
-  const minutes = parseInt(m) || 0;
-  return hours + (minutes / 60);
-}
-
-// Extract H and M from decimal for form population
-function decimalToHM(decimal) {
-  const h = Math.floor(decimal || 0);
-  const m = Math.round(((decimal || 0) - h) * 60);
-  return { h, m };
-}
-
-// Format numbers with commas (e.g. 10000 -> 10,000)
-function formatNumber(num) {
-    if(!num && num !== 0) return "0";
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-// PRIVACY TOGGLES
-function updatePrivacyIcons(btn, isPrivate) {
-  if (isPrivate) {
-    btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"></path></svg>';
-    btn.classList.add('active');
-  } else {
-    btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
-    btn.classList.remove('active');
-  }
-}
-
-function togglePrivacy(btnElement, targetIds, cardId) {
-  appState.settings.privacyMode = !appState.settings.privacyMode;
-  syncSave();
-  applyPrivacyState(btnElement, targetIds, cardId);
-}
-
-function applyPrivacyState(btnElement, targetIds, cardId) {
-  const isPriv = appState.settings.privacyMode;
-  
-  targetIds.forEach(id => {
-    const el = document.getElementById(id);
-    if(el) {
-      if(isPriv) el.classList.add('privacy-blur');
-      else el.classList.remove('privacy-blur');
-    }
-  });
-
-  const card = document.getElementById(cardId);
-  if(card) {
-    if(isPriv) card.classList.add('privacy-active');
-    else card.classList.remove('privacy-active');
-  }
-  
-  if (btnElement) updatePrivacyIcons(btnElement, isPriv);
-}
-
-function toggleCardPrivacy(cardId) {
-  const btn = document.querySelector('.kpi-card .btn-icon');
-  togglePrivacy(btn, ['kpiHourlyRate', 'kpiHourlySub'], cardId);
-}
-
-function toggleTablePrivacy(btnElement) {
-  appState.settings.historyPrivacyMode = !appState.settings.historyPrivacyMode;
-  syncSave();
-  applyTablePrivacyState(btnElement);
-}
-
-function applyTablePrivacyState(btnElement) {
-  const isPriv = appState.settings.historyPrivacyMode;
-  const table = document.getElementById('dataTable');
-  
-  if(table) {
-    if(isPriv) table.classList.add('table-privacy');
-    else table.classList.remove('table-privacy');
-  }
-
-  const card1 = document.getElementById('chartWinrateMonthlyCard');
-  const card2 = document.getElementById('chartWinrateDailyCard');
-  if(card1) {
-    if(isPriv) card1.classList.add('privacy-active'); else card1.classList.remove('privacy-active');
-  }
-  if(card2) {
-    if(isPriv) card2.classList.add('privacy-active'); else card2.classList.remove('privacy-active');
-  }
-
-  if (btnElement) {
-    if (isPriv) {
-      btnElement.innerHTML = '👁️ Mostrar datos financieros';
-    } else {
-      btnElement.innerHTML = '👁️ Ocultar datos financieros';
-    }
-  }
-}
+function generateId() { return Math.random().toString(36).substr(2, 9); }
+function getNextDayStr(dateStr) { const d = new Date(dateStr+'T00:00:00'); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; }
+function decimalToHHMM(decimal) { if (!decimal) return "0h 0m"; const h = Math.floor(decimal), m = Math.round((decimal - h) * 60); return `${h}h ${m}m`; }
+function hmToDecimal(h, m) { return (parseInt(h) || 0) + ((parseInt(m) || 0) / 60); }
+function decimalToHM(decimal) { return { h: Math.floor(decimal || 0), m: Math.round(((decimal || 0) - Math.floor(decimal || 0)) * 60) }; }
+function formatNumber(num) { return num ? num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "0"; }
 
 function calculateProfit() {
   const start = parseFloat(document.getElementById('inpBankStart').value) || 0;
   const end = parseFloat(document.getElementById('inpBankEnd').value) || 0;
-  const profit = end - start;
-  document.getElementById('inpProfit').value = profit.toFixed(2);
-}
-
-function getScreenshotData() {
-    return [
-        {date: "2026-11-01", month: "2026-11", studyInd: hmToDecimal(0,0), playHrs: hmToDecimal(2,30), bankStart: 2550, bankEnd: 2650, profit: 100, withdrawal: 0, steps: 0, habits: {}, notes: "Ingresado desde screenshot"},
-        {date: "2026-11-02", month: "2026-11", studyInd: hmToDecimal(0,0), playHrs: hmToDecimal(4,0), bankStart: 2650, bankEnd: 2797, profit: 147, withdrawal: 0, steps: 0, habits: {}, notes: "Ingresado desde screenshot"},
-        {date: "2026-11-04", month: "2026-11", studyInd: hmToDecimal(1,0), playHrs: hmToDecimal(2,21), bankStart: 2797, bankEnd: 2867, profit: 70, withdrawal: 267, steps: 0, habits: {}, notes: "Ingresado desde screenshot"},
-        {date: "2026-11-07", month: "2026-11", studyInd: hmToDecimal(0,0), playHrs: hmToDecimal(3,30), bankStart: 2500, bankEnd: 2611, profit: 111, withdrawal: 0, steps: 0, habits: {}, notes: "Ingresado desde screenshot"},
-        {date: "2026-11-08", month: "2026-11", studyInd: hmToDecimal(1,0), playHrs: hmToDecimal(7,30), bankStart: 2611, bankEnd: 2394, profit: -217, withdrawal: 0, steps: 0, habits: {}, notes: "Ingresado desde screenshot"},
-        {date: "2026-11-09", month: "2026-11", studyInd: hmToDecimal(0,0), playHrs: hmToDecimal(4,0), bankStart: 2394, bankEnd: 2329, profit: -65, withdrawal: 0, steps: 0, habits: {}, notes: "Ingresado desde screenshot"},
-        {date: "2026-11-10", month: "2026-11", studyInd: hmToDecimal(0,0), playHrs: hmToDecimal(4,0), bankStart: 2329, bankEnd: 2185, profit: -144, withdrawal: 0, steps: 0, habits: {}, notes: "Ingresado desde screenshot"},
-        {date: "2026-11-11", month: "2026-11", studyInd: hmToDecimal(0,30), playHrs: hmToDecimal(4,30), bankStart: 2185, bankEnd: 2265, profit: 80, withdrawal: 0, steps: 0, habits: {}, notes: "Ingresado desde screenshot"},
-        {date: "2026-11-12", month: "2026-11", studyInd: hmToDecimal(0,30), playHrs: hmToDecimal(4,0), bankStart: 2265, bankEnd: 2317, profit: 52, withdrawal: 0, steps: 0, habits: {}, notes: "Ingresado desde screenshot"},
-        {date: "2026-11-13", month: "2026-11", studyInd: hmToDecimal(1,0), playHrs: hmToDecimal(7,0), bankStart: 2317, bankEnd: 2391, profit: 74, withdrawal: 0, steps: 0, habits: {}, notes: "Ingresado desde screenshot"},
-        {date: "2026-11-14", month: "2026-11", studyInd: hmToDecimal(0,0), playHrs: hmToDecimal(5,27), bankStart: 2391, bankEnd: 2604, profit: 213, withdrawal: 0, steps: 0, habits: {}, notes: "Ingresado desde screenshot"}
-    ];
+  document.getElementById('inpProfit').value = (end - start).toFixed(2);
 }
 
 function loadState() {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw) {
-    try {
-      appState = JSON.parse(raw);
-      if(!appState.settings) appState.settings = { privacyMode: false, historyPrivacyMode: false };
-      if(appState.goals.stepsPerMonth === undefined) appState.goals.stepsPerMonth = 300000;
-    } catch (e) {
-      appState.entries = getScreenshotData();
-    }
-  } else {
-    // Attempt migration from v12
-    const rawOld = localStorage.getItem('tracking_pro_ev_local_monthly_v12');
-    if (rawOld) {
-        try {
-            appState = JSON.parse(rawOld);
-            if(!appState.settings) appState.settings = { privacyMode: false, historyPrivacyMode: false };
-            if(appState.goals.stepsPerMonth === undefined) appState.goals.stepsPerMonth = 300000;
-            saveState(); 
-        } catch(e) {
-            appState.entries = getScreenshotData();
-        }
-    } else {
-        appState.entries = getScreenshotData();
-        saveState();
-    }
-  }
+  if (raw) { try { appState = JSON.parse(raw); } catch (e) {} }
 }
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
 }
 
-function initSupabase() {
-  if (appState.settings.supaUrl && appState.settings.supaKey && createClient) {
+async function initSupabase() {
+  if (appState.settings.supaUrl && appState.settings.supaKey) {
       supabaseClient = createClient(appState.settings.supaUrl, appState.settings.supaKey);
-      syncSave();
+      
+      // Auto-descargar datos de la nube al iniciar o recargar la página
+      setSyncStatus('syncing');
+      const { data, error } = await supabaseClient.from('app_estado').select('datos').eq('id', 'mi_tracker').single();
+      
+      if (!error && data && data.datos) {
+          appState = data.datos;
+          saveState();
+          refreshAll();
+          setSyncStatus('success');
+      } else {
+          syncSave(); // Si no hay nube o falla, sube el local
+      }
   }
 }
 
 function setSyncStatus(status) {
     const el = document.getElementById('syncStatus');
-    if (!el) return;
-    if (status === 'syncing') { el.style.background = 'rgba(245,158,11,0.1)'; el.style.color = 'var(--accent-amber)'; el.style.borderColor = 'rgba(245,158,11,0.3)'; el.innerHTML = '↻ Subiendo...'; }
-    else if (status === 'error') { el.style.background = 'rgba(239,68,68,0.1)'; el.style.color = '#ef4444'; el.style.borderColor = 'rgba(239,68,68,0.3)'; el.innerHTML = '⚠ Modo Local'; }
-    else if (status === 'success') { el.style.background = 'rgba(16,185,129,0.1)'; el.style.color = 'var(--accent-green)'; el.style.borderColor = 'rgba(16,185,129,0.3)'; el.innerHTML = '✓ Nube Ok'; }
-    else if (status === 'local') { el.style.background = 'rgba(16,185,129,0.1)'; el.style.color = 'var(--accent-green)'; el.style.borderColor = 'rgba(16,185,129,0.3)'; el.innerHTML = '✓ Local'; }
+    if (status === 'syncing') { el.className = 'sync-status syncing'; el.innerHTML = '↻ Sincronizando...'; } 
+    else if (status === 'error') { el.className = 'sync-status error'; el.innerHTML = '⚠ Guardado Local (Offline)'; } 
+    else if (status === 'success') { el.className = 'sync-status'; el.innerHTML = '✓ Nube Actualizada'; } 
+    else if (status === 'local') { el.className = 'sync-status syncing'; el.innerHTML = '✓ Local'; }
 }
 
 async function syncSave() {
     saveState();
     if (!supabaseClient) { setSyncStatus('local'); return; }
+    
     setSyncStatus('syncing');
-    try {
-        const { error } = await supabaseClient.from('app_estado').upsert({ id: 'mi_tracker', datos: appState });
-        if (error) throw error;
-        setSyncStatus('success');
-    } catch (err) {
-        console.error(err);
-        setSyncStatus('error');
-    }
+    const { error } = await supabaseClient.from('app_estado').upsert({ id: 'mi_tracker', datos: appState });
+    if (error) { console.error(error); setSyncStatus('error'); } else { setSyncStatus('success'); }
 }
 
 async function syncLoad() {
     const url = document.getElementById('supaUrlInput').value.trim();
     const key = document.getElementById('supaKeyInput').value.trim();
     if (!url || !key) { alert("Ingresa URL y Key"); return; }
+    
     setSyncStatus('syncing');
-    try {
-        const tempClient = createClient(url, key);
-        const { data, error } = await tempClient.from('app_estado').select('datos').eq('id', 'mi_tracker').single();
-        if (error && error.code !== 'PGRST116') throw error;
-        
-        if (data && data.datos) { 
-            appState = data.datos; 
-            alert("Datos descargados de la nube."); 
-        }
-        if(!appState.settings) appState.settings = {};
-        appState.settings.supaUrl = url; 
-        appState.settings.supaKey = key;
-        saveState(); 
-        initSupabase(); 
-        closeSettingsModal(); 
-        initUI();
-    } catch(err) {
-        alert("Fallo la conexión con Supabase. Revisa el código SQL y credenciales.");
+    const tempClient = createClient(url, key);
+    const { data, error } = await tempClient.from('app_estado').select('datos').eq('id', 'mi_tracker').single();
+    
+    if (error && error.code !== 'PGRST116') {
+        alert("Fallo la conexión. Revisa el código SQL en Supabase.");
         setSyncStatus('error');
+    } else {
+        if (data && data.datos) { appState = data.datos; alert("Datos descargados de la nube."); }
+        appState.settings.supaUrl = url; appState.settings.supaKey = key;
+        saveState(); initSupabase(); closeSettingsModal(); initUI();
     }
 }
 
-function openSettingsModal() {
-    document.getElementById('supaUrlInput').value = appState.settings?.supaUrl || "";
-    document.getElementById('supaKeyInput').value = appState.settings?.supaKey || "";
-    document.getElementById('syncModal').style.display = 'flex';
+function openSettingsModal() { 
+    document.getElementById('supaUrlInput').value = appState.settings.supaUrl || ""; 
+    document.getElementById('supaKeyInput').value = appState.settings.supaKey || ""; 
+    document.getElementById('syncModal').style.display = 'flex'; 
 }
 function closeSettingsModal() { document.getElementById('syncModal').style.display = 'none'; }
 
 
 function getUniqueMonths() {
   const months = new Set(appState.entries.map(e => e.date.substring(0, 7)));
-  if (months.size === 0) {
-    const today = new Date().toISOString().substring(0, 7);
-    months.add(today);
-  }
+  if (months.size === 0) { const today = new Date().toISOString().substring(0, 7); months.add(today); }
   return Array.from(months).sort();
 }
 
@@ -819,230 +358,109 @@ function loadEntryToForm(entry) {
   document.getElementById('inpWithdrawal').value = (entry.withdrawal || 0).toFixed(2);
   document.getElementById('inpSteps').value = entry.steps || 0;
   document.getElementById('inpNotes').value = entry.notes || '';
-  
-  const playT = decimalToHM(entry.playHrs);
-  document.getElementById('inpPlayHrsH').value = playT.h;
-  document.getElementById('inpPlayHrsM').value = playT.m;
-  
-  const studyT = decimalToHM(entry.studyInd);
-  document.getElementById('inpStudyH').value = studyT.h;
-  document.getElementById('inpStudyM').value = studyT.m;
-  
-  appState.goals.habits.forEach(h => {
-    const el = document.getElementById('chk_' + h.id);
-    if(el) {
-      el.checked = entry.habits && entry.habits[h.id] ? true : false;
-    }
-  });
+  const pt = decimalToHM(entry.playHrs); document.getElementById('inpPlayHrsH').value = pt.h; document.getElementById('inpPlayHrsM').value = pt.m;
+  const st = decimalToHM(entry.studyInd); document.getElementById('inpStudyH').value = st.h; document.getElementById('inpStudyM').value = st.m;
+  appState.goals.habits.forEach(h => { const el = document.getElementById('chk_' + h.id); if(el) el.checked = !!(entry.habits && entry.habits[h.id]); });
   calculateProfit();
 }
 
 function setupDailyInputDefaults(forceDate = null) {
-  let targetDate = document.getElementById('inpDate').value;
-  if (forceDate) {
-      targetDate = forceDate;
-      document.getElementById('inpDate').value = forceDate;
-  } else if (!targetDate) {
-      const now = new Date();
-      targetDate = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,'0') + "-" + String(now.getDate()).padStart(2,'0');
-      document.getElementById('inpDate').value = targetDate;
-  }
+  let targetDate = forceDate || document.getElementById('inpDate').value || new Date().toISOString().split('T')[0];
+  document.getElementById('inpDate').value = targetDate;
   
-  // If navigating to an existing date, load it directly
   const existing = appState.entries.find(e => e.date === targetDate);
-  if (existing) {
-      loadEntryToForm(existing);
-      return;
-  }
+  if (existing) { loadEntryToForm(existing); return; }
   
-  // Clean fields for new entry
-  document.getElementById('inpWithdrawal').value = "0.00";
-  document.getElementById('inpNotes').value = "";
-  document.getElementById('inpSteps').value = "0";
-  document.getElementById('inpPlayHrsH').value = "0";
-  document.getElementById('inpPlayHrsM').value = "0";
-  document.getElementById('inpStudyH').value = "0";
-  document.getElementById('inpStudyM').value = "0";
-  appState.goals.habits.forEach(h => {
-    const el = document.getElementById('chk_' + h.id);
-    if(el) el.checked = true; 
-  });
+  document.getElementById('inpWithdrawal').value = "0";
+  document.getElementById('inpNotes').value = ""; document.getElementById('inpSteps').value = "0";
+  document.getElementById('inpPlayHrsH').value = "0"; document.getElementById('inpPlayHrsM').value = "0";
+  document.getElementById('inpStudyH').value = "0"; document.getElementById('inpStudyM').value = "0";
+  appState.goals.habits.forEach(h => { const el = document.getElementById('chk_' + h.id); if(el) el.checked = true; });
   
-  // Auto-predict next bankroll mathematically correctly
-  if (appState.entries.length > 0) {
-    const sorted = [...appState.entries].sort((a, b) => a.date.localeCompare(b.date));
-    
-    // Find the most recent entry strictly BEFORE the target date
-    const previousEntries = sorted.filter(e => e.date < targetDate);
-    if (previousEntries.length > 0) {
-       const lastEntry = previousEntries[previousEntries.length - 1];
-       const carryOver = (lastEntry.bankEnd || 0) - (lastEntry.withdrawal || 0);
-       document.getElementById('inpBankStart').value = carryOver.toFixed(2);
-       document.getElementById('inpBankEnd').value = carryOver.toFixed(2);
-    } else {
-       document.getElementById('inpBankStart').value = "0.00";
-       document.getElementById('inpBankEnd').value = "0.00";
-    }
+  const sorted = [...appState.entries].sort((a, b) => a.date.localeCompare(b.date));
+  const prev = sorted.filter(e => e.date < targetDate);
+  if (prev.length > 0) {
+     const last = prev[prev.length - 1];
+     const carry = (last.bankEnd || 0) - (last.withdrawal || 0);
+     document.getElementById('inpBankStart').value = carry.toFixed(2);
+     document.getElementById('inpBankEnd').value = carry.toFixed(2);
+  } else {
+     document.getElementById('inpBankStart').value = "0"; document.getElementById('inpBankEnd').value = "0";
   }
   calculateProfit();
 }
 
 function initUI() {
   const months = getUniqueMonths();
-  const fromSel = document.getElementById('fromMonth');
-  const toSel = document.getElementById('toMonth');
-  
-  if (months.length > 0) {
-    fromSel.value = months[months.length - 1];
-    toSel.value = months[months.length - 1];
-  } else {
-    const today = new Date().toISOString().substring(0, 7);
-    fromSel.value = today;
-    toSel.value = today;
-  }
+  const fromSel = document.getElementById('fromMonth'); const toSel = document.getElementById('toMonth');
+  if (months.length > 0) { fromSel.value = months[months.length - 1]; toSel.value = months[months.length - 1]; } 
+  else { const today = new Date().toISOString().substring(0, 7); fromSel.value = today; toSel.value = today; }
 
-  // Auto focus on next day logic if there are entries, otherwise today
   if(appState.entries.length > 0) {
       const sorted = [...appState.entries].sort((a,b) => a.date.localeCompare(b.date));
-      const lastRec = sorted[sorted.length-1];
-      const targetNext = getNextDayStr(lastRec.date);
-      setupDailyInputDefaults(targetNext);
-  } else {
-      setupDailyInputDefaults();
-  }
+      setupDailyInputDefaults(getNextDayStr(sorted[sorted.length-1].date));
+  } else { setupDailyInputDefaults(); }
 
-  renderHabitInputs();
-  renderHabitManager();
-  renderGoalInputs();
-  initSupabase();
+  renderHabitInputs(); renderHabitManager(); renderGoalInputs();
   
-  // Apply saved privacy states
-  applyPrivacyState(document.querySelector('.kpi-card .btn-icon'), ['kpiHourlyRate', 'kpiHourlySub'], 'chartDailyProfitCard');
-  applyTablePrivacyState(document.getElementById('btnTablePrivacy'));
+  initSupabase();
+  if (supabaseClient) setSyncStatus('success'); else setSyncStatus('local');
   
   refreshAll();
 }
 
-// ==========================================
-// DRAG AND DROP LOGIC FOR HABITS
-// ==========================================
-let draggedItem = null;
-function handleDragStart(e) {
-  draggedItem = this;
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', this.dataset.id);
-  setTimeout(() => this.style.opacity = '0.4', 0);
-}
-function handleDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  return false;
-}
-function handleDragEnter(e) {
-  this.style.border = '1px dashed #10b981';
-}
-function handleDragLeave(e) {
-  this.style.border = '1px solid var(--border)';
-}
-function handleDrop(e) {
-  e.stopPropagation();
-  this.style.border = '1px solid var(--border)';
-  if (draggedItem !== this) {
-    const draggedId = e.dataTransfer.getData('text/plain');
-    const targetId = this.dataset.id;
-    const habits = appState.goals.habits;
-    const fromIdx = habits.findIndex(h => h.id === draggedId);
-    const toIdx = habits.findIndex(h => h.id === targetId);
-    const element = habits[fromIdx];
-    habits.splice(fromIdx, 1);
-    habits.splice(toIdx, 0, element);
-    syncSave();
-    renderHabitManager();
-    renderHabitInputs();
-    refreshAll();
-  }
-  return false;
-}
-function handleDragEnd(e) {
-  this.style.opacity = '1';
-  document.querySelectorAll('.habit-manager-item').forEach(item => {
-    item.style.border = '1px solid var(--border)';
-  });
-}
-// ==========================================
-
 function renderHabitInputs() {
-  const container = document.getElementById('habitCheckboxes');
-  container.innerHTML = appState.goals.habits.map(h => `
-    <label class="habit-check-item">
-      <input type="checkbox" id="chk_${h.id}" checked />
-      <span>${h.name}</span>
-    </label>
-  `).join('');
+  const c = document.getElementById('habitCheckboxes');
+  c.innerHTML = appState.goals.habits.map(h => `<label class="habit-check-item" style="background:var(--bg-card);border:1px solid var(--border);padding:14px;border-radius:8px;display:flex;align-items:center;gap:12px;width:100%;"><input type="checkbox" id="chk_${h.id}" checked style="width:24px;height:24px;" /><span>${h.name}</span></label>`).join('');
 }
 
 function renderHabitManager() {
-  const container = document.getElementById('habitManagerList');
-  container.innerHTML = '';
-  appState.goals.habits.forEach(h => {
+  const c = document.getElementById('habitManagerList'); c.innerHTML = '';
+  appState.goals.habits.forEach((h, i) => {
     const div = document.createElement('div');
-    div.className = 'habit-manager-item';
-    div.draggable = true;
-    div.dataset.id = h.id;
-    
+    div.style.cssText = "display:flex; align-items:center; gap:8px; background:var(--bg-input); padding:10px; border-radius:8px; border:1px solid var(--border); margin-bottom:10px;";
     div.innerHTML = `
-      <div class="drag-handle">☰</div>
-      <input type="text" id="edit_name_${h.id}" value="${h.name}" onchange="updateHabit('${h.id}')" />
-      <span style="font-size:12px; color:var(--text-muted);">Meta/Mes:</span>
-      <input type="number" id="edit_days_${h.id}" min="1" max="31" value="${h.targetPerMonth}" onchange="updateHabit('${h.id}')" />
-      <button class="btn btn-danger" style="padding:4px 8px;" onclick="removeHabit('${h.id}')">✕</button>
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <button class="btn-icon" style="background:var(--bg-card);border:1px solid var(--border);padding:6px 12px; font-size:16px;" onclick="moveHabit(${i}, -1)">▲</button>
+        <button class="btn-icon" style="background:var(--bg-card);border:1px solid var(--border);padding:6px 12px; font-size:16px;" onclick="moveHabit(${i}, 1)">▼</button>
+      </div>
+      <input type="text" id="edit_name_${h.id}" value="${h.name}" onchange="updateHabit('${h.id}')" style="flex-grow:1; padding:12px; font-size:16px;" />
+      <input type="number" id="edit_days_${h.id}" min="1" max="31" value="${h.targetPerMonth}" onchange="updateHabit('${h.id}')" style="width:75px; padding:12px; font-size:16px;" />
+      <button class="btn btn-danger" style="padding:14px; font-size:16px;" onclick="removeHabit('${h.id}')">✕</button>
     `;
-    div.addEventListener('dragstart', handleDragStart);
-    div.addEventListener('dragenter', handleDragEnter);
-    div.addEventListener('dragover', handleDragOver);
-    div.addEventListener('dragleave', handleDragLeave);
-    div.addEventListener('drop', handleDrop);
-    div.addEventListener('dragend', handleDragEnd);
-    container.appendChild(div);
+    c.appendChild(div);
   });
 }
 
+function moveHabit(index, direction) {
+    const arr = appState.goals.habits;
+    if(index + direction >= 0 && index + direction < arr.length) {
+        let temp = arr[index]; arr[index] = arr[index + direction]; arr[index + direction] = temp;
+        syncSave(); renderHabitManager(); renderHabitInputs(); refreshAll();
+    }
+}
+
 function addHabit() {
-  const name = document.getElementById('newHabitName').value.trim();
-  const days = parseInt(document.getElementById('newHabitDays').value) || 20;
-  if (!name) { alert("Ingresa un nombre para el hábito"); return; }
-  const newId = 'hab_' + generateId();
-  appState.goals.habits.push({ id: newId, name: name, targetPerMonth: Math.min(31, Math.max(1, days)) });
-  document.getElementById('newHabitName').value = '';
-  syncSave();
-  renderHabitManager();
-  renderHabitInputs();
-  refreshAll();
+  const name = document.getElementById('newHabitName').value.trim(); const days = parseInt(document.getElementById('newHabitDays').value) || 20;
+  if (!name) return;
+  appState.goals.habits.push({ id: 'hab_' + generateId(), name: name, targetPerMonth: Math.min(31, Math.max(1, days)) });
+  document.getElementById('newHabitName').value = ''; syncSave(); renderHabitManager(); renderHabitInputs(); refreshAll();
 }
 
 function updateHabit(id) {
-  const habit = appState.goals.habits.find(h => h.id === id);
-  if (habit) {
-    const newName = document.getElementById('edit_name_' + id).value.trim();
-    const newDays = parseInt(document.getElementById('edit_days_' + id).value) || habit.targetPerMonth;
-    if (newName) habit.name = newName;
-    habit.targetPerMonth = Math.min(31, Math.max(1, newDays));
-    syncSave();
-    renderHabitInputs();
-    refreshAll();
+  const h = appState.goals.habits.find(x => x.id === id);
+  if (h) {
+    h.name = document.getElementById('edit_name_' + id).value.trim() || h.name;
+    h.targetPerMonth = Math.min(31, Math.max(1, parseInt(document.getElementById('edit_days_' + id).value) || h.targetPerMonth));
+    syncSave(); renderHabitInputs(); refreshAll();
   }
 }
 
 function removeHabit(id) {
-  if (confirm("¿Estás seguro de eliminar este hábito?")) {
-    appState.goals.habits = appState.goals.habits.filter(h => h.id !== id);
-    appState.entries.forEach(e => {
-      if (e.habits && e.habits[id] !== undefined) delete e.habits[id];
-    });
-    syncSave();
-    renderHabitManager();
-    renderHabitInputs();
-    refreshAll();
+  if (confirm("¿Borrar hábito?")) {
+    appState.goals.habits = appState.goals.habits.filter(x => x.id !== id);
+    appState.entries.forEach(e => { if (e.habits && e.habits[id] !== undefined) delete e.habits[id]; });
+    syncSave(); renderHabitManager(); renderHabitInputs(); refreshAll();
   }
 }
 
@@ -1051,692 +469,135 @@ function renderGoalInputs() {
   document.getElementById('goalPlayHrs').value = appState.goals.playHoursPerMonth;
   document.getElementById('goalSteps').value = appState.goals.stepsPerMonth || 300000;
 }
-
 function saveGoals() {
   appState.goals.studyHoursPerMonth = parseFloat(document.getElementById('goalStudyHrs').value) || 0;
   appState.goals.playHoursPerMonth = parseFloat(document.getElementById('goalPlayHrs').value) || 0;
   appState.goals.stepsPerMonth = parseInt(document.getElementById('goalSteps').value) || 0;
-  syncSave();
-  refreshAll();
-  alert('Objetivos actualizados correctamente.');
+  syncSave(); refreshAll(); alert('Metas guardadas.');
 }
 
 function saveDailyEntry() {
-  const date = document.getElementById('inpDate').value;
-  const month = date.substring(0, 7);
+  const date = document.getElementById('inpDate').value; const month = date.substring(0, 7);
+  const entry = {
+    date, month,
+    bankStart: parseFloat(document.getElementById('inpBankStart').value) || 0,
+    bankEnd: parseFloat(document.getElementById('inpBankEnd').value) || 0,
+    profit: parseFloat(document.getElementById('inpProfit').value) || 0,
+    withdrawal: parseFloat(document.getElementById('inpWithdrawal').value) || 0,
+    playHrs: hmToDecimal(document.getElementById('inpPlayHrsH').value, document.getElementById('inpPlayHrsM').value),
+    studyInd: hmToDecimal(document.getElementById('inpStudyH').value, document.getElementById('inpStudyM').value),
+    steps: parseInt(document.getElementById('inpSteps').value) || 0,
+    notes: document.getElementById('inpNotes').value,
+    habits: {}
+  };
+  appState.goals.habits.forEach(h => { const el = document.getElementById('chk_' + h.id); if(el) entry.habits[h.id] = el.checked; });
   
-  const bankStart = parseFloat(document.getElementById('inpBankStart').value) || 0;
-  const bankEnd = parseFloat(document.getElementById('inpBankEnd').value) || 0;
-  const profit = parseFloat(document.getElementById('inpProfit').value) || 0;
-  const withdrawal = parseFloat(document.getElementById('inpWithdrawal').value) || 0;
-  
-  // Read HH:MM and convert to decimal hours
-  const playH = document.getElementById('inpPlayHrsH').value;
-  const playM = document.getElementById('inpPlayHrsM').value;
-  const playHrs = hmToDecimal(playH, playM);
-  
-  const studyH = document.getElementById('inpStudyH').value;
-  const studyM = document.getElementById('inpStudyM').value;
-  const studyInd = hmToDecimal(studyH, studyM);
-  
-  const steps = parseInt(document.getElementById('inpSteps').value) || 0;
-  
-  const notes = document.getElementById('inpNotes').value;
-
-  const habits = {};
-  appState.goals.habits.forEach(h => {
-    const el = document.getElementById('chk_' + h.id);
-    if(el) habits[h.id] = el.checked;
-  });
-  
-  // Fetch old entry to calculate bankroll delta if editing
   const oldEntry = appState.entries.find(e => e.date === date);
-  let oldCarryOver = 0;
-  if (oldEntry) {
-      oldCarryOver = (oldEntry.bankEnd || 0) - (oldEntry.withdrawal || 0);
-  }
-
-  const entry = { date, month, studyInd, playHrs, bankStart, bankEnd, profit, withdrawal, steps, habits, notes };
+  const oldCarry = oldEntry ? (oldEntry.bankEnd || 0) - (oldEntry.withdrawal || 0) : 0;
+  if (oldEntry) Object.assign(oldEntry, entry); else appState.entries.push(entry);
   
-  if (oldEntry) {
-    Object.assign(oldEntry, entry);
-  } else {
-    appState.entries.push(entry);
-  }
-  
-  const newCarryOver = (entry.bankEnd || 0) - (entry.withdrawal || 0);
-  const delta = newCarryOver - oldCarryOver;
-  
-  // MAGIC LEDGER CASCADE: If you modify a past withdrawal or past session profit,
-  // we shift the future days exactly by the delta, preserving any manual deposits.
-  if (oldEntry && Math.abs(delta) > 0.001) {
-      appState.entries.forEach(e => {
-          if (e.date > date) {
-              e.bankStart += delta;
-              e.bankEnd += delta;
-          }
-      });
-  }
+  const delta = ((entry.bankEnd || 0) - (entry.withdrawal || 0)) - oldCarry;
+  if (oldEntry && Math.abs(delta) > 0.001) { appState.entries.forEach(e => { if (e.date > date) { e.bankStart += delta; e.bankEnd += delta; } }); }
   
   appState.entries.sort((a, b) => a.date.localeCompare(b.date));
   syncSave();
   
-  // Expand filters if necessary
-  const mFrom = document.getElementById('fromMonth').value;
-  const mTo = document.getElementById('toMonth').value;
-  if (month < mFrom) document.getElementById('fromMonth').value = month;
-  if (month > mTo) document.getElementById('toMonth').value = month;
+  if (month < document.getElementById('fromMonth').value) document.getElementById('fromMonth').value = month;
+  if (month > document.getElementById('toMonth').value) document.getElementById('toMonth').value = month;
   
-  // Move to the exact NEXT calendar day automatically
-  const nextDateStr = getNextDayStr(date);
-  setupDailyInputDefaults(nextDateStr);
-  
-  alert('Registro guardado. Banca actualizada.');
-  refreshAll();
+  setupDailyInputDefaults(getNextDayStr(date)); refreshAll();
+  if(navigator.vibrate) navigator.vibrate(50);
 }
 
 function deleteEntry(date) {
   if(!confirm(`¿Borrar registro del ${date}?`)) return;
-  const entryIdx = appState.entries.findIndex(e => e.date === date);
-  if (entryIdx >= 0) {
-      const entry = appState.entries[entryIdx];
-      const oldCarryOver = (entry.bankEnd || 0) - (entry.withdrawal || 0);
-      
-      let prevCarryOver = 0;
-      if (entryIdx > 0) {
-          const prev = appState.entries[entryIdx - 1];
-          prevCarryOver = (prev.bankEnd || 0) - (prev.withdrawal || 0);
-      } else if (appState.entries.length > 1) {
-          prevCarryOver = appState.entries[1].bankStart; 
-      }
-      
-      const delta = prevCarryOver - oldCarryOver;
-      appState.entries.splice(entryIdx, 1);
-      
-      // Cascade delta to future days to preserve continuity
-      if (Math.abs(delta) > 0.001) {
-          appState.entries.forEach(e => {
-              if (e.date > date) {
-                  e.bankStart += delta;
-                  e.bankEnd += delta;
-              }
-          });
-      }
+  const i = appState.entries.findIndex(e => e.date === date);
+  if (i >= 0) {
+      const oldCarry = (appState.entries[i].bankEnd || 0) - (appState.entries[i].withdrawal || 0);
+      const prevCarry = (i > 0) ? (appState.entries[i-1].bankEnd || 0) - (appState.entries[i-1].withdrawal || 0) : (appState.entries.length > 1 ? appState.entries[1].bankStart : 0);
+      const delta = prevCarry - oldCarry;
+      appState.entries.splice(i, 1);
+      if (Math.abs(delta) > 0.001) appState.entries.forEach(e => { if (e.date > date) { e.bankStart += delta; e.bankEnd += delta; } });
       syncSave();
   }
-  
-  const today = new Date().toISOString().split('T')[0];
-  setupDailyInputDefaults(today);
-  refreshAll();
+  setupDailyInputDefaults(new Date().toISOString().split('T')[0]); refreshAll();
 }
 
-function countMonths(m1, m2) {
-  if (m1 > m2) return 0;
-  const d1 = new Date(m1 + "-01");
-  const d2 = new Date(m2 + "-01");
-  return (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()) + 1;
-}
-
+function countMonths(m1, m2) { return (m1>m2)?0 : (new Date(m2+"-01").getFullYear() - new Date(m1+"-01").getFullYear()) * 12 + (new Date(m2+"-01").getMonth() - new Date(m1+"-01").getMonth()) + 1; }
 function generateMonthsList(m1, m2) {
-  const list = [];
-  if (m1 > m2) return list;
-  let curr = new Date(m1 + "-01");
-  const end = new Date(m2 + "-01");
-  while (curr <= end) {
-    const y = curr.getFullYear();
-    const m = (curr.getMonth() + 1).toString().padStart(2, '0');
-    list.push(`${y}-${m}`);
-    curr.setMonth(curr.getMonth() + 1);
-  }
-  return list;
+  const l = []; if (m1 > m2) return l; let c = new Date(m1 + "-01"); const e = new Date(m2 + "-01");
+  while (c <= e) { l.push(c.getFullYear() + "-" + String(c.getMonth() + 1).padStart(2, '0')); c.setMonth(c.getMonth() + 1); } return l;
 }
 
 function refreshAll() {
-  let mFrom = document.getElementById('fromMonth').value;
-  let mTo = document.getElementById('toMonth').value;
-  if (mFrom > mTo) { 
-    const t = mFrom; mFrom = mTo; mTo = t; 
-    document.getElementById('fromMonth').value = mFrom; 
-    document.getElementById('toMonth').value = mTo; 
-  }
-  
+  let mFrom = document.getElementById('fromMonth').value, mTo = document.getElementById('toMonth').value;
+  if (mFrom > mTo) { document.getElementById('fromMonth').value = mTo; document.getElementById('toMonth').value = mFrom; mFrom = document.getElementById('fromMonth').value; mTo = document.getElementById('toMonth').value; }
   if(!mFrom || !mTo) return;
 
-  const numMonths = countMonths(mFrom, mTo);
-  const filtered = appState.entries.filter(e => e.month >= mFrom && e.month <= mTo);
+  const numM = countMonths(mFrom, mTo);
+  const fil = appState.entries.filter(e => e.month >= mFrom && e.month <= mTo);
+  document.getElementById('periodSummary').textContent = `${numM} mes(es) · ${fil.length} días registrados`;
 
-  document.getElementById('periodSummary').textContent =
-    `${numMonths} mes(es) en el período · ${filtered.length} días registrados.`;
+  let tSt=0, tPl=0, tPr=0, tStp=0;
+  fil.forEach(e => { tSt+=e.studyInd||0; tPl+=e.playHrs||0; tPr+=e.profit||0; tStp+=e.steps||0; });
 
-  // Totals
-  let totStudy = 0, totPlay = 0, totProfit = 0, totWithdrawals = 0, totSteps = 0;
+  const pSt = numM * appState.goals.studyHoursPerMonth, pPl = numM * appState.goals.playHoursPerMonth, pStp = numM * (appState.goals.stepsPerMonth || 300000);
+  let tHabP=0, tHabD=0;
   
-  filtered.forEach(e => {
-    totStudy += (e.studyInd || 0);
-    totPlay += (e.playHrs || 0);
-    totProfit += (e.profit || 0);
-    totWithdrawals += (e.withdrawal || 0);
-    totSteps += (e.steps || 0);
-  });
+  document.getElementById('dashboardHabitList').innerHTML = appState.goals.habits.map(h => {
+    const pl = h.targetPerMonth * numM; tHabP += pl;
+    let dn = 0; fil.forEach(e => { if (e.habits && e.habits[h.id]) { dn++; tHabD++; } });
+    const pc = pl > 0 ? Math.round((dn/pl)*100) : 0;
+    return `<div style="display:flex;flex-direction:column;gap:4px;"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:#cbd5e1;"><span>${h.name}</span><span>${dn}/${pl}d (${pc}%)</span></div><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100,pc)}%;background:${pc>=100?'#10b981':(pc>=75?'#f59e0b':'#3b82f6')};"></div></div></div>`;
+  }).join('');
 
-  const planStudy = numMonths * appState.goals.studyHoursPerMonth;
-  const planPlay = numMonths * appState.goals.playHoursPerMonth;
-  const planSteps = numMonths * (appState.goals.stepsPerMonth || 300000);
+  document.getElementById('kpiStudyHours').textContent = decimalToHHMM(tSt); document.getElementById('barStudy').style.width = `${pSt>0?Math.min(100,Math.round((tSt/pSt)*100)):0}%`;
+  document.getElementById('kpiPlayHours').textContent = decimalToHHMM(tPl); document.getElementById('barPlay').style.width = `${pPl>0?Math.min(100,Math.round((tPl/pPl)*100)):0}%`;
+  document.getElementById('kpiTotalSteps').textContent = formatNumber(tStp); document.getElementById('barSteps').style.width = `${pStp>0?Math.min(100,Math.round((tStp/pStp)*100)):0}%`;
+  document.getElementById('kpiHourlyRate').textContent = `$${tPl>0?(tPr/tPl).toFixed(2):'0.00'}/h`; 
+  document.getElementById('kpiHabitPct').textContent = `${tHabP>0?Math.round((tHabD/tHabP)*100):0}%`; document.getElementById('barHabit').style.width = `${tHabP>0?Math.min(100,Math.round((tHabD/tHabP)*100)):0}%`;
 
-  const pctStudy = planStudy > 0 ? Math.round((totStudy / planStudy) * 100) : 0;
-  const pctPlay = planPlay > 0 ? Math.round((totPlay / planPlay) * 100) : 0;
-  const pctSteps = planSteps > 0 ? Math.round((totSteps / planSteps) * 100) : 0;
+  const tbody = document.getElementById('dailyTableBody');
+  tbody.innerHTML = [...fil].sort((a,b)=>b.date.localeCompare(a.date)).map(e => `<tr><td><strong>${e.date.slice(5)}</strong></td><td>$${(e.bankStart||0).toFixed(0)}</td><td style="color:var(--accent-cyan)">$${(e.bankEnd||0).toFixed(0)}</td><td style="color:${e.profit>=0?'#10b981':'#ef4444'}">$${(e.profit||0).toFixed(0)}</td><td>${decimalToHHMM(e.playHrs)}</td><td style="color:var(--accent-amber)">$${e.playHrs>0?(e.profit/e.playHrs).toFixed(1):0}</td><td>${e.withdrawal>0?'-$'+e.withdrawal:''}</td><td>${decimalToHHMM(e.studyInd)}</td><td>${formatNumber(e.steps)}</td><td><button class="btn" style="padding:4px 8px;font-size:11px;" onclick="editEntry('${e.date}')">✎</button></td></tr>`).join('');
 
-  // Habits totals
-  let totalHabitPlanned = 0;
-  let totalHabitDone = 0;
-  let dashHabitsHTML = '';
-
-  appState.goals.habits.forEach(h => {
-    const plannedForHabit = h.targetPerMonth * numMonths;
-    totalHabitPlanned += plannedForHabit;
-    
-    let doneForHabit = 0;
-    filtered.forEach(e => {
-      if (e.habits && e.habits[h.id]) { doneForHabit++; totalHabitDone++; }
-    });
-
-    const pctHabitInd = plannedForHabit > 0 ? Math.round((doneForHabit / plannedForHabit) * 100) : 0;
-    const barColor = pctHabitInd >= 100 ? '#10b981' : (pctHabitInd >= 75 ? '#f59e0b' : '#3b82f6');
-    
-    dashHabitsHTML += `
-      <div class="dashboard-habit-item">
-        <div class="dashboard-habit-header">
-          <span>${h.name}</span>
-          <span>${doneForHabit} / ${plannedForHabit}d (${pctHabitInd}%)</span>
-        </div>
-        <div class="dashboard-habit-track">
-          <div class="dashboard-habit-fill" style="width:${Math.min(100, pctHabitInd)}%; background:${barColor};"></div>
-        </div>
-      </div>
-    `;
-  });
-  
-  document.getElementById('dashboardHabitList').innerHTML = dashHabitsHTML;
-
-  const pctHabit = totalHabitPlanned > 0 ? Math.round((totalHabitDone / totalHabitPlanned) * 100) : 0;
-  const hourlyRate = totPlay > 0 ? (totProfit / totPlay).toFixed(2) : '0.00';
-
-  // Format accumulated times
-  const fmtTotStudy = decimalToHHMM(totStudy);
-  const fmtPlanStudy = decimalToHHMM(planStudy);
-  const fmtTotPlay = decimalToHHMM(totPlay);
-  const fmtPlanPlay = decimalToHHMM(planPlay);
-
-  // Update KPI DOM
-  document.getElementById('kpiStudyHours').textContent = fmtTotStudy;
-  document.getElementById('kpiStudySub').textContent = `Meta del período: ${fmtPlanStudy}`;
-  document.getElementById('barStudy').style.width = `${Math.min(100, pctStudy)}%`;
-  document.getElementById('pctStudy').textContent = `${pctStudy}% del objetivo`;
-
-  document.getElementById('kpiPlayHours').textContent = fmtTotPlay;
-  document.getElementById('kpiPlaySub').textContent = `${fmtPlanPlay} planificadas`;
-  document.getElementById('barPlay').style.width = `${Math.min(100, pctPlay)}%`;
-  document.getElementById('pctPlay').textContent = `${pctPlay}% del objetivo`;
-  
-  // Update Steps KPI
-  document.getElementById('kpiTotalSteps').textContent = formatNumber(totSteps);
-  document.getElementById('kpiStepsSub').textContent = `Meta: ${formatNumber(planSteps)} en el período`;
-  document.getElementById('barSteps').style.width = `${Math.min(100, pctSteps)}%`;
-  document.getElementById('pctSteps').textContent = `${pctSteps}% del objetivo`;
-
-  const sign = totProfit >= 0 ? '+' : '';
-  document.getElementById('kpiHourlyRate').textContent = `$${hourlyRate}/h`;
-  document.getElementById('kpiHourlySub').textContent = `Ganancia bruta período: ${sign}$${totProfit.toFixed(2)}`;
-
-  document.getElementById('kpiHabitPct').textContent = `${pctHabit}%`;
-  document.getElementById('kpiHabitSub').textContent = `${totalHabitDone} de ${totalHabitPlanned} bloques`;
-  document.getElementById('barHabit').style.width = `${Math.min(100, pctHabit)}%`;
-  document.getElementById('pctHabit').textContent = `${pctHabit}% del período`;
-
-  const monthsList = generateMonthsList(mFrom, mTo);
-  renderCharts(monthsList, filtered);
-  renderTables(filtered);
+  renderCharts(fil);
 }
 
-function renderCharts(monthsList, filtered) {
-  const allDays = [...filtered].sort((a,b) => a.date.localeCompare(b.date));
-  const dailyLabels = [];
-  
-  // Dashboard Chart: Only cumulative session profits (no total bankroll)
-  const dailyCumProfit = [];
-  const dailyProfitBars = [];
-  let runningProfit = 0;
-  
-  const dailyStudyBars = [];
-  const dailyPlayBars = [];
-  const dailyHourlyLine = [];
-  const dailyStepsBars = [];
-
-  allDays.forEach(d => {
-    const dayLabel = d.date.slice(5, 10);
-    dailyLabels.push(dayLabel);
-    
-    // Profit Accumulation
-    const prof = d.profit || 0;
-    runningProfit += prof;
-    dailyCumProfit.push(+runningProfit.toFixed(2));
-    dailyProfitBars.push(prof);
-    
-    // Keep internal decimal for charting scale
-    dailyStudyBars.push(d.studyInd || 0);
-    dailyPlayBars.push(d.playHrs || 0);
-    dailyStepsBars.push(d.steps || 0);
-    
-    const hRate = d.playHrs > 0 ? +(d.profit / d.playHrs).toFixed(2) : 0;
-    dailyHourlyLine.push(hRate);
-  });
-
-  const studyByMonth = [];
-  const studyTargetLine = [];
-  const playByMonth = [];
-  const playTargetLine = [];
-  const stepsByMonth = [];
-  const hourlyByMonth = [];
-
-  for (let m of monthsList) {
-    const mEntries = filtered.filter(e => e.month === m);
-    const sInd = mEntries.reduce((a, b) => a + (b.studyInd || 0), 0);
-    const pHrs = mEntries.reduce((a, b) => a + (b.playHrs || 0), 0);
-    const prof = mEntries.reduce((a, b) => a + (b.profit || 0), 0);
-    const stp = mEntries.reduce((a, b) => a + (b.steps || 0), 0);
-
-    studyByMonth.push(+sInd.toFixed(2));
-    studyTargetLine.push(appState.goals.studyHoursPerMonth);
-
-    playByMonth.push(+pHrs.toFixed(2));
-    playTargetLine.push(appState.goals.playHoursPerMonth);
-    
-    stepsByMonth.push(stp);
-    
-    const hRate = pHrs > 0 ? +(prof / pHrs).toFixed(2) : 0;
-    hourlyByMonth.push(hRate);
-  }
-
-  const dailyStudyTarget = appState.goals.studyHoursPerMonth / 30;
-  const dailyPlayTarget = appState.goals.playHoursPerMonth / 30;
-  const dailyStepsTarget = (appState.goals.stepsPerMonth || 300000) / 30;
-  
-  const targetStudyLineData = Array(dailyLabels.length).fill(dailyStudyTarget);
-  const targetPlayLineData = Array(dailyLabels.length).fill(dailyPlayTarget);
-  const targetStepsLineData = Array(dailyLabels.length).fill(dailyStepsTarget);
-  const targetStepsMonthlyLineData = Array(monthsList.length).fill(appState.goals.stepsPerMonth || 300000);
+function renderCharts(filtered) {
+  const allDays = [...filtered].sort((a,b)=>a.date.localeCompare(b.date));
+  const lab=[], cPr=[], bPr=[], st=[], pl=[], stp=[]; let run=0;
+  allDays.forEach(d => { lab.push(d.date.slice(5)); run+=d.profit||0; cPr.push(run); bPr.push(d.profit||0); st.push(d.studyInd||0); pl.push(d.playHrs||0); stp.push(d.steps||0); });
 
   Object.values(charts).forEach(c => c && c.destroy());
-
-  const commonScale = {
-    x: { ticks: { color: '#94a3b8', maxTicksLimit: 15 }, grid: { color: 'rgba(255,255,255,0.04)' } },
-    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } }
-  };
+  const sc = { x: { ticks: { color: '#94a3b8' }, grid: { display: false } }, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } } };
   
-  const tooltipTimeFormatter = {
-    callbacks: {
-      label: function(context) {
-        let label = context.dataset.label || '';
-        if (label) { label += ': '; }
-        if (context.parsed.y !== null) {
-          label += decimalToHHMM(context.parsed.y);
-        }
-        return label;
-      }
-    }
-  };
-
-  // Chart 1: Daily Profit (Line for cumulative profit, bars for daily session result)
-  charts.dailyProfit = new Chart(document.getElementById('chartDailyProfit'), {
-    type: 'bar',
-    data: {
-      labels: dailyLabels,
-      datasets: [
-        {
-          type: 'line',
-          label: 'Ganancia Acumulada ($)',
-          data: dailyCumProfit,
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
-          fill: true,
-          tension: 0.2,
-          yAxisID: 'y'
-        },
-        {
-          type: 'bar',
-          label: 'Sesión Diaria ($)',
-          data: dailyProfitBars,
-          backgroundColor: dailyProfitBars.map(v => v >= 0 ? '#3b82f6' : '#e11d48'),
-          borderRadius: 2,
-          yAxisID: 'y1'
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#cbd5e1' } } },
-      scales: {
-        x: commonScale.x,
-        y: { type: 'linear', display: true, position: 'left', ticks: { color: '#10b981' }, grid: { color: 'rgba(255,255,255,0.06)' } },
-        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#94a3b8' } }
-      }
-    }
-  });
-
-  // Chart 2: Study Daily
-  charts.studyDaily = new Chart(document.getElementById('chartStudyDaily'), {
-    type: 'bar',
-    data: {
-      labels: dailyLabels,
-      datasets: [
-        {
-          type: 'line',
-          label: 'Meta diaria prom. (h)',
-          data: targetStudyLineData,
-          borderColor: '#94a3b8',
-          borderDash: [5, 5],
-          borderWidth: 1.5,
-          pointRadius: 0
-        },
-        {
-          label: 'Estudio Real (h)',
-          data: dailyStudyBars,
-          backgroundColor: '#52637a',
-          borderRadius: 4
-        }
-      ]
-    },
-    options: { 
-      responsive: true, 
-      maintainAspectRatio: false, 
-      plugins: { 
-        legend: { labels: { color: '#cbd5e1' } },
-        tooltip: tooltipTimeFormatter
-      }, 
-      scales: commonScale 
-    }
-  });
-
-  // Chart 3: Play Daily
-  charts.playDaily = new Chart(document.getElementById('chartPlayDaily'), {
-    type: 'bar',
-    data: {
-      labels: dailyLabels,
-      datasets: [
-        {
-          type: 'line',
-          label: 'Meta diaria prom. (h)',
-          data: targetPlayLineData,
-          borderColor: '#f59e0b',
-          borderDash: [5, 5],
-          borderWidth: 1.5,
-          pointRadius: 0
-        },
-        {
-          label: 'Horas Jugadas (h)',
-          data: dailyPlayBars,
-          backgroundColor: '#8b5cf6',
-          borderRadius: 4
-        }
-      ]
-    },
-    options: { 
-      responsive: true, 
-      maintainAspectRatio: false, 
-      plugins: { 
-        legend: { labels: { color: '#cbd5e1' } },
-        tooltip: tooltipTimeFormatter 
-      }, 
-      scales: commonScale 
-    }
-  });
-  
-  // NEW: Chart 3.5: Steps Daily
-  charts.stepsDaily = new Chart(document.getElementById('chartStepsDaily'), {
-    type: 'bar',
-    data: {
-      labels: dailyLabels,
-      datasets: [
-        {
-          type: 'line',
-          label: 'Meta diaria prom. (pasos)',
-          data: targetStepsLineData,
-          borderColor: '#f97316',
-          borderDash: [5, 5],
-          borderWidth: 1.5,
-          pointRadius: 0
-        },
-        {
-          label: 'Pasos dados',
-          data: dailyStepsBars,
-          backgroundColor: 'rgba(249, 115, 22, 0.8)',
-          borderRadius: 4
-        }
-      ]
-    },
-    options: { 
-      responsive: true, 
-      maintainAspectRatio: false, 
-      plugins: { 
-        legend: { labels: { color: '#cbd5e1' } }
-      }, 
-      scales: commonScale 
-    }
-  });
-  
-  // Chart 4: Monthly Study (Historic)
-  charts.studyMonthly = new Chart(document.getElementById('chartStudyMonthly'), {
-    type: 'bar',
-    data: {
-      labels: monthsList,
-      datasets: [
-        { type: 'line', label: 'Meta mensual (h)', data: studyTargetLine, borderColor: '#94a3b8', borderDash: [5, 5], borderWidth: 1.5, pointRadius: 0 },
-        { label: 'Estudio Real (h)', data: studyByMonth, backgroundColor: '#52637a', borderRadius: 4 }
-      ]
-    },
-    options: { 
-      responsive: true, 
-      maintainAspectRatio: false, 
-      plugins: { 
-        legend: { labels: { color: '#cbd5e1' } },
-        tooltip: tooltipTimeFormatter 
-      }, 
-      scales: commonScale 
-    }
-  });
-
-  // Chart 5: Monthly Play (Historic)
-  charts.playMonthly = new Chart(document.getElementById('chartPlayMonthly'), {
-    type: 'bar',
-    data: {
-      labels: monthsList,
-      datasets: [
-        { type: 'line', label: 'Meta Juego (h)', data: playTargetLine, borderColor: '#f59e0b', borderDash: [5, 5], borderWidth: 2, pointRadius: 0 },
-        { label: 'Horas Jugadas (h)', data: playByMonth, backgroundColor: '#8b5cf6', borderRadius: 4 }
-      ]
-    },
-    options: { 
-      responsive: true, 
-      maintainAspectRatio: false, 
-      plugins: { 
-        legend: { labels: { color: '#cbd5e1' } },
-        tooltip: tooltipTimeFormatter 
-      }, 
-      scales: commonScale 
-    }
-  });
-  
-  // NEW: Chart 5.5: Monthly Steps (Historic)
-  charts.stepsMonthly = new Chart(document.getElementById('chartStepsMonthly'), {
-    type: 'bar',
-    data: {
-      labels: monthsList,
-      datasets: [
-        { type: 'line', label: 'Meta Pasos (mes)', data: targetStepsMonthlyLineData, borderColor: '#f97316', borderDash: [5, 5], borderWidth: 2, pointRadius: 0 },
-        { label: 'Pasos Acumulados', data: stepsByMonth, backgroundColor: 'rgba(249, 115, 22, 0.8)', borderRadius: 4 }
-      ]
-    },
-    options: { 
-      responsive: true, 
-      maintainAspectRatio: false, 
-      plugins: { 
-        legend: { labels: { color: '#cbd5e1' } }
-      }, 
-      scales: commonScale 
-    }
-  });
-
-  // Chart 6: Monthly Hourly Rate (Historic)
-  charts.monthlyHourly = new Chart(document.getElementById('chartMonthlyHourly'), {
-    type: 'bar',
-    data: {
-      labels: monthsList,
-      datasets: [{
-        label: 'Winrate ($/Hora) por Mes',
-        data: hourlyByMonth,
-        backgroundColor: hourlyByMonth.map(v => v >= 0 ? '#f59e0b' : '#e11d48'),
-        borderRadius: 4
-      }]
-    },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#cbd5e1' } } }, scales: commonScale }
-  });
-
-  // Chart 7: Daily Hourly Rate (Evolution)
-  charts.dailyHourly = new Chart(document.getElementById('chartDailyHourly'), {
-    type: 'bar',
-    data: {
-      labels: dailyLabels,
-      datasets: [{
-        label: 'Winrate Sesión ($/Hora)',
-        data: dailyHourlyLine,
-        backgroundColor: dailyHourlyLine.map(v => v >= 0 ? '#f59e0b' : '#e11d48'),
-        borderRadius: 4
-      }]
-    },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#cbd5e1' } } }, scales: commonScale }
-  });
+  if(document.getElementById('chartDailyProfit')) {
+      charts.dailyProfit = new Chart(document.getElementById('chartDailyProfit'), { type: 'bar', data: { labels: lab, datasets: [{ type: 'line', data: cPr, borderColor: '#10b981', fill: false, tension: 0.2 }, { type: 'bar', data: bPr, backgroundColor: bPr.map(v=>v>=0?'#3b82f6':'#e11d48'), borderRadius: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: sc } });
+      charts.playDaily = new Chart(document.getElementById('chartPlayDaily'), { type: 'bar', data: { labels: lab, datasets: [{ label:'Juego', data: pl, backgroundColor: '#8b5cf6', borderRadius: 4 }, { label:'Estudio', data: st, backgroundColor: '#2563eb', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: sc } });
+      charts.stepsDaily = new Chart(document.getElementById('chartStepsDaily'), { type: 'bar', data: { labels: lab, datasets: [{ label:'Pasos', data: stp, backgroundColor: '#f97316', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: sc } });
+  }
 }
 
-function renderTables(filtered) {
-  const tbody = document.getElementById('dailyTableBody');
-  const recent = [...filtered].sort((a,b) => b.date.localeCompare(a.date)); // descending 
-  
-  tbody.innerHTML = recent.map(e => {
-    const pClass = e.profit >= 0 ? 'badge-pos' : 'badge-neg';
-    const dayHr = e.playHrs > 0 ? (e.profit / e.playHrs).toFixed(2) : '0.00';
-    const withdrawalStr = (e.withdrawal > 0) ? `<span style="color:#ef4444; font-weight:bold;">-$${e.withdrawal.toFixed(2)}</span>` : '-';
-    
-    const playStr = decimalToHHMM(e.playHrs || 0);
-    const studyStr = decimalToHHMM(e.studyInd || 0);
-    const stepsStr = formatNumber(e.steps || 0);
+function editEntry(date) { switchTab('registro', document.querySelectorAll('.nav-tab')[1]); setupDailyInputDefaults(date); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function switchTab(viewId, btn) { document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active')); document.getElementById('view-' + viewId).classList.add('active'); document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active')); btn.classList.add('active'); refreshAll(); }
+function exportData() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' })); a.download = `tracking_base_datos.json`; a.click(); }
+function importData(event) { const r = new FileReader(); r.onload = e => { appState = JSON.parse(e.target.result); saveState(); initUI(); }; r.readAsText(event.target.files[0]); }
 
-    return `
-      <tr>
-        <td><strong>${e.date}</strong></td>
-        <td class="privacy-col">$${(e.bankStart || 0).toFixed(2)}</td>
-        <td class="privacy-col"><strong style="color:var(--accent-cyan);">$${(e.bankEnd || 0).toFixed(2)}</strong></td>
-        <td class="${pClass}">$${(e.profit || 0).toFixed(2)}</td>
-        <td>${playStr}</td>
-        <td class="privacy-col" style="color:var(--accent-amber);">$${dayHr}/h</td>
-        <td class="privacy-col">${withdrawalStr}</td>
-        <td>${studyStr}</td>
-        <td>${stepsStr}</td>
-        <td>
-          <button class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="deleteEntry('${e.date}')">✕</button>
-          <button class="btn" style="padding:4px 8px;font-size:11px; margin-left:4px;" onclick="editEntry('${e.date}')">✎</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
+// PWA: Service Worker Registration & Online/Offline Events
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); });
 }
 
-function editEntry(date) {
-  const entry = appState.entries.find(e => e.date === date);
-  if (!entry) return;
-  
-  document.getElementById('inpDate').value = entry.date;
-  document.getElementById('inpBankStart').value = (entry.bankStart || 0).toFixed(2);
-  document.getElementById('inpBankEnd').value = (entry.bankEnd || 0).toFixed(2);
-  document.getElementById('inpWithdrawal').value = (entry.withdrawal || 0).toFixed(2);
-  document.getElementById('inpSteps').value = entry.steps || 0;
-  document.getElementById('inpNotes').value = entry.notes || '';
-  
-  const playT = decimalToHM(entry.playHrs);
-  document.getElementById('inpPlayHrsH').value = playT.h;
-  document.getElementById('inpPlayHrsM').value = playT.m;
-  
-  const studyT = decimalToHM(entry.studyInd);
-  document.getElementById('inpStudyH').value = studyT.h;
-  document.getElementById('inpStudyM').value = studyT.m;
-  
-  appState.goals.habits.forEach(h => {
-    const el = document.getElementById('chk_' + h.id);
-    if(el) {
-      el.checked = entry.habits && entry.habits[h.id] ? true : false;
-    }
-  });
-  
-  calculateProfit();
-  switchTab('registro', document.querySelector('.nav-tab:nth-child(2)'));
-  
-  // Scroll to top to see form
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+window.addEventListener('online', () => { if(supabaseClient) syncSave(); });
 
-function switchTab(viewId, btn) {
-  document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
-  document.getElementById('view-' + viewId).classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
-  btn.classList.add('active');
-  refreshAll();
-}
-
-function exportData() {
-  const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `tracking_bankroll_${new Date().toISOString().slice(0,10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function importData(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      appState = JSON.parse(e.target.result);
-      syncSave();
-      initUI();
-      alert('Base de datos restaurada.');
-    } catch (err) {
-      alert('Archivo JSON inválido.');
-    }
-  };
-  reader.readAsText(file);
-}
-
-function resetToEmpty() {
-  if (!confirm('¿Borrar todo y empezar de cero?')) return;
-  appState.entries = [];
-  syncSave();
-  initUI();
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  loadState();
-  initUI();
+// Auto-Refresh al volver a la pestaña (Sincronización PC-Móvil)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && supabaseClient) {
+      initSupabase(); // Descarga automáticamente al enfocar la pestaña
+  }
 });
 
-// PWA & Sincronización Offline
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(err => console.log(err)); });
-}
-window.addEventListener('online', () => { if(supabaseClient) syncSave(); });
+window.addEventListener('DOMContentLoaded', () => { loadState(); initUI(); });
 </script>
 </body>
 </html>
